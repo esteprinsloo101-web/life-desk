@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Life Desk — SA household life-management autopilot demo. Sample data only. Not tax, legal or financial advice." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Life Desk · Household Autopilot</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314b8a6'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='14' font-family='sans-serif' font-weight='800' fill='%23042f2e'%3ELD%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">LD</div>
+        <div class="brand-text">
+          <h1>Life Desk</h1>
+          <p>Prinsloo household · Bloemfontein</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="icon-btn" id="btn-reset" title="Reset demo" aria-label="Reset demo">↺</button>
+        <button type="button" class="icon-btn" id="btn-info" title="About" aria-label="About">ℹ</button>
+      </div>
+    </header>
+
+    <main class="main" id="main">
+      <!-- TODAY -->
+      <section class="view active" id="view-today" data-view="today">
+        <div class="view-title">
+          <div>
+            <h2>Today</h2>
+            <p class="sub">Autopilot queue · <span id="today-date"></span></p>
+          </div>
+          <span class="badge teal" id="today-count"><span class="dot"></span> 0 due</span>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head">
+            <h3>Auto queue</h3>
+            <span class="badge muted">L3–L4</span>
+          </div>
+          <div class="list" id="today-queue"></div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head">
+            <h3>Next reminders</h3>
+            <span class="badge info">auto</span>
+          </div>
+          <div id="reminder-panel"></div>
+        </div>
+
+        <p class="disclaimer">Not tax, legal or financial advice · Demo sample data only · App prepares &amp; reminds — you Approve money / government.</p>
+      </section>
+
+      <!-- MONEY -->
+      <section class="view" id="view-money" data-view="money">
+        <div class="view-title">
+          <div>
+            <h2>Money</h2>
+            <p class="sub">Bills · envelopes · prepaid</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2 mb-12">
+          <div class="card kpi">
+            <div class="stat-value teal" id="money-due-total">R0</div>
+            <div class="stat-label">Still due this cycle</div>
+          </div>
+          <div class="card kpi">
+            <div class="stat-value green" id="money-paid-count">0</div>
+            <div class="stat-label">Marked paid</div>
+          </div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Budget envelopes</h3><span class="badge muted">sketch</span></div>
+          <div id="envelope-list"></div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Bills</h3><span class="badge" id="bills-badge">—</span></div>
+          <div class="list" id="bills-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Prepaid / municipal</h3></div>
+          <div class="list" id="prepaid-list"></div>
+        </div>
+        <p class="disclaimer">Not financial advice · Demo data · Confirm municipal amounts on your metro statement.</p>
+      </section>
+
+      <!-- VEHICLE -->
+      <section class="view" id="view-vehicle" data-view="vehicle">
+        <div class="view-title">
+          <div>
+            <h2>Vehicle</h2>
+            <p class="sub" id="vehicle-subtitle">—</p>
+          </div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Licence disc</h3><span class="badge" id="disc-badge">—</span></div>
+          <div class="countdown-big" id="disc-countdown">—</div>
+          <p class="sub" style="margin-top:6px;color:var(--muted);font-size:12px" id="disc-meta"></p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-disc-checklist">Prep checklist</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-disc-renewed">Mark renewed</button>
+          </div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Service due</h3><span class="badge warn" id="service-badge">—</span></div>
+          <p id="service-meta" style="font-size:13px;color:var(--text-dim)"></p>
+          <div class="progress"><span id="service-bar" style="width:0%"></span></div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Insurance</h3></div>
+          <div id="insurance-meta" style="font-size:13px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Log fuel fill</h3></div>
+          <div class="form-row"><label>Litres</label><input type="number" id="fill-litres" inputmode="decimal" placeholder="e.g. 45" /></div>
+          <div class="form-row"><label>Amount (ZAR)</label><input type="number" id="fill-amount" inputmode="decimal" placeholder="e.g. 990" /></div>
+          <div class="form-row"><label>Odometer (km)</label><input type="number" id="fill-odo" inputmode="numeric" placeholder="e.g. 78420" /></div>
+          <button type="button" class="btn btn-primary btn-block" id="btn-log-fill">Save fill</button>
+          <div class="list" id="fill-log" style="margin-top:12px"></div>
+        </div>
+        <p class="disclaimer">Not a licensing agent · Demo data · Confirm disc / NaTIS requirements yourself.</p>
+      </section>
+
+      <!-- MORE hub -->
+      <section class="view" id="view-more" data-view="more">
+        <div class="view-title">
+          <div>
+            <h2>More</h2>
+            <p class="sub">Modules · settings</p>
+          </div>
+        </div>
+        <div class="more-grid" id="more-grid"></div>
+        <p class="disclaimer">Toggle unused modules in Settings · Household employer can be switched off.</p>
+      </section>
+
+      <!-- TAX -->
+      <section class="view" id="view-tax" data-view="tax">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Tax deadlines</h2>
+            <p class="sub">Reminders + prep packs · not filing</p>
+          </div>
+        </div>
+        <div class="list" id="tax-list"></div>
+        <p class="disclaimer">Not tax advice · Life Desk does not file on SARS eFiling · Confirm deadlines with SARS / a registered practitioner.</p>
+      </section>
+
+      <!-- HOUSEHOLD -->
+      <section class="view" id="view-household" data-view="household">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Household</h2>
+            <p class="sub">Domestic / gardener employer</p>
+          </div>
+        </div>
+
+        <div class="approve-card mb-12" id="payroll-approve">
+          <h3>Approve payroll</h3>
+          <p id="payroll-copy">Payslips ready for next pay day. App prepared slips — you confirm pay.</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost" id="btn-payroll-later">Later</button>
+            <button type="button" class="btn btn-amber" id="btn-payroll-approve">Approve pay</button>
+          </div>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Workers</h3><span class="badge teal" id="workers-count">0</span></div>
+          <div class="list" id="workers-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>UIF window</h3><span class="badge warn">checklist</span></div>
+          <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px">Contribution period open. Deep-link to uFiling when you are ready — app does not submit for you.</p>
+          <button type="button" class="btn btn-ghost btn-block" id="btn-ufiling">Open uFiling checklist</button>
+        </div>
+        <p class="disclaimer">Not labour / DoEL advice · Not a uFiling agent · Demo data.</p>
+      </section>
+
+      <!-- DOCS -->
+      <section class="view" id="view-docs" data-view="docs">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Docs vault</h2>
+            <p class="sub">IDs · policies · slips · packs</p>
+          </div>
+        </div>
+        <div class="list" id="docs-list"></div>
+        <p class="disclaimer">Demo vault · Sample metadata only · No real documents stored on this device beyond localStorage.</p>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view" id="view-settings" data-view="settings">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Settings</h2>
+            <p class="sub">Adapt modules · persisted locally</p>
+          </div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Module toggles</h3><span class="badge teal">adaptable</span></div>
+          <div class="toggle-list" id="module-toggles"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Demo</h3></div>
+          <button type="button" class="btn btn-danger btn-block" id="btn-reset-2">Reset all demo data</button>
+        </div>
+        <p class="disclaimer">Flags saved in localStorage · Turning a module off hides it from nav and Today queue.</p>
+      </section>
+    </main>
+
+    <nav class="nav" id="bottom-nav" aria-label="Primary">
+      <button type="button" class="active" data-nav="today"><span class="nav-ico" aria-hidden="true">◎</span>Today</button>
+      <button type="button" data-nav="money" data-mod="money"><span class="nav-ico" aria-hidden="true">R</span>Money</button>
+      <button type="button" data-nav="vehicle" data-mod="vehicle"><span class="nav-ico" aria-hidden="true">▣</span>Vehicle</button>
+      <button type="button" data-nav="more"><span class="nav-ico" aria-hidden="true">☰</span>More</button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="modal-backdrop" id="modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">About</h3>
+      <div id="modal-body"></div>
+      <button type="button" class="btn btn-primary btn-block" id="modal-close" style="margin-top:12px">Close</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
