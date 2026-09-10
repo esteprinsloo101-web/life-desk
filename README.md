@@ -24,6 +24,12 @@ Shared DNA with Garage Desk and other Este apps: the app **reminds, chases, prep
 
 Master function map: `/workspace/ops/research/2026-09-10-life-and-business-apps-master.md`
 
+## Live URL
+
+**https://esteprinsloo101-web.github.io/life-desk/**
+
+(GitHub Pages from `main`; allow a minute after push for first deploy.)
+
 ## Open locally
 
 Plain static files. No build step.
