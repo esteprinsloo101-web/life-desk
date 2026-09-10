@@ -4,8 +4,84 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "life-desk-v1";
+  const STORAGE_KEY = "life-desk-v2";
   const TZ = "Africa/Johannesburg";
+
+  /* ── Process types (guided wizards, not checklists) ── */
+  const PROCESS_TYPES = {
+    pay_bill: {
+      label: "Pay bill",
+      icon: "R",
+      defaultCadenceDays: 30,
+      leadDays: 7,
+      disclaimer: "Not financial advice. You pay — Life Desk only guides.",
+      steps: [
+        { key: "review", title: "Review bill", body: "Confirm payee, amount and due date. Check your statement if unsure." },
+        { key: "account", title: "Open account / pay", body: "Use the account link below (bank app, municipal portal, or debit order note). Complete payment yourself." },
+        { key: "confirm", title: "Confirm paid", body: "Tick when the payment is done on your side.", checks: ["I paid / authorised this bill"] },
+      ],
+    },
+    renew_disc: {
+      label: "Renew licence disc",
+      icon: "▣",
+      defaultCadenceDays: 365,
+      leadDays: 30,
+      disclaimer: "Not a licensing agent. Confirm NaTIS / licensing requirements yourself.",
+      steps: [
+        { key: "docs", title: "Gather documents", body: "Prepare what the licensing department typically asks for.", checks: ["Driving licence", "Proof of address (≤3 months)", "Insurance / clearance if required", "Roadworthy if due"] },
+        { key: "visit", title: "Renew at agent", body: "Attend licensing department / NaTIS agent. Use any portal link if you renew online." },
+        { key: "confirm", title: "Confirm renewed", body: "Mark when the new disc is issued.", checks: ["New disc issued / collected"] },
+      ],
+    },
+    tax_deadline: {
+      label: "Tax deadline prep",
+      icon: "📋",
+      defaultCadenceDays: 180,
+      leadDays: 21,
+      disclaimer: "Not tax advice. Life Desk does not file on SARS eFiling.",
+      steps: [
+        { key: "prep", title: "Prep pack", body: "Gather IRP5s, medical, travel, and other docs. Advance prep as you go." },
+        { key: "efiling", title: "Open eFiling", body: "Log into SARS eFiling yourself. App does not submit." },
+        { key: "confirm", title: "Confirm filed", body: "Mark only after you submitted.", checks: ["I submitted / authorised filing myself"] },
+      ],
+    },
+    payroll: {
+      label: "Approve payroll",
+      icon: "👥",
+      defaultCadenceDays: 30,
+      leadDays: 5,
+      disclaimer: "Not labour advice. You Approve pay — app does not move money.",
+      steps: [
+        { key: "review", title: "Review slips", body: "Check worker names, days and wage totals prepared by the app." },
+        { key: "approve", title: "Approve pay", body: "Confirm you will pay workers. Open bank / uFiling links if needed." },
+        { key: "confirm", title: "Confirm approved", body: "Mark Approve complete.", checks: ["Payroll Approved for this cycle"] },
+      ],
+    },
+    prepaid_topup: {
+      label: "Prepaid / municipal top-up",
+      icon: "⚡",
+      defaultCadenceDays: 18,
+      leadDays: 5,
+      disclaimer: "Confirm municipal amounts on your metro statement.",
+      steps: [
+        { key: "check", title: "Check balance", body: "Note meter / account balance before top-up." },
+        { key: "topup", title: "Top up", body: "Use vendor, bank app or municipal portal." },
+        { key: "confirm", title: "Log top-up", body: "Confirm top-up done.", checks: ["Top-up completed"] },
+      ],
+    },
+    custom: {
+      label: "Custom process",
+      icon: "◎",
+      defaultCadenceDays: 30,
+      leadDays: 5,
+      disclaimer: "Demo process — adapt steps to your household.",
+      steps: [
+        { key: "do", title: "Do the work", body: "Follow your own checklist for this recurring item." },
+        { key: "confirm", title: "Confirm done", body: "Mark complete when finished.", checks: ["Work completed"] },
+      ],
+    },
+  };
+
 
   const DEFAULT_MODULES = {
     money: true,
@@ -75,7 +151,75 @@
         { id: "d5", title: "Provisional tax prep pack", category: "Tax", expiresAt: isoDate(addDays(today, 24)), module: "tax" },
         { id: "d6", title: "Medical aid membership", category: "Health", expiresAt: null, module: "money" },
       ],
+      processes: seedProcesses(today),
+      history: [],
     };
+  }
+
+  function seedProcesses(today) {
+    const billDue = (dueDay) => {
+      const now = startOfDay(today);
+      let d = new Date(now.getFullYear(), now.getMonth(), dueDay);
+      if (d < now) {/* keep overdue this month */}
+      return isoDate(d);
+    };
+    return [
+      {
+        id: "pr-b1", type: "pay_bill", title: "Pay Mangaung rates & taxes",
+        nextDue: billDue(7), cadenceDays: 30, leadDays: 7, module: "money",
+        accountLinks: [{ label: "Mangaung portal", url: "https://www.mangaung.co.za/" }],
+        meta: { amount: 1850, billId: "b1", accountRef: "MM-44291" },
+      },
+      {
+        id: "pr-b3", type: "pay_bill", title: "Pay school fees — Term",
+        nextDue: billDue(15), cadenceDays: 30, leadDays: 7, module: "money",
+        accountLinks: [{ label: "School fees note", url: "https://www.gov.za/" }],
+        meta: { amount: 4200, billId: "b3", accountRef: "SF-09" },
+      },
+      {
+        id: "pr-b5", type: "pay_bill", title: "Pay DSTV Compact",
+        nextDue: billDue(20), cadenceDays: 30, leadDays: 5, module: "money",
+        accountLinks: [{ label: "DStv account", url: "https://www.dstv.co.za/" }],
+        meta: { amount: 689, billId: "b5", accountRef: "DSTV" },
+      },
+      {
+        id: "pr-pre1", type: "prepaid_topup", title: "Electricity (prepaid) top-up",
+        nextDue: isoDate(addDays(today, 6)), cadenceDays: 18, leadDays: 5, module: "money",
+        accountLinks: [{ label: "Prepaid vendor / bank", url: "https://www.fnb.co.za/" }],
+        meta: { prepaidId: "p1" },
+      },
+      {
+        id: "pr-disc", type: "renew_disc", title: "Licence disc renewal",
+        nextDue: isoDate(addDays(today, 18)), cadenceDays: 365, leadDays: 30, module: "vehicle",
+        accountLinks: [{ label: "NaTIS / RTMC info", url: "https://www.natis.gov.za/" }],
+        meta: { reg: "FS 12 GP GP" },
+      },
+      {
+        id: "pr-tax1", type: "tax_deadline", title: "Provisional tax — 1st period",
+        nextDue: isoDate(addDays(today, 24)), cadenceDays: 180, leadDays: 21, module: "tax",
+        accountLinks: [{ label: "SARS eFiling", url: "https://www.sarsefiling.co.za/" }],
+        meta: { taxId: "t1" },
+      },
+      {
+        id: "pr-tax3", type: "tax_deadline", title: "VAT 201 (if registered) — demo",
+        nextDue: isoDate(addDays(today, 11)), cadenceDays: 60, leadDays: 14, module: "tax",
+        accountLinks: [{ label: "SARS eFiling", url: "https://www.sarsefiling.co.za/" }],
+        meta: { taxId: "t3" },
+      },
+      {
+        id: "pr-pay", type: "payroll", title: "Approve household payroll",
+        nextDue: isoDate(addDays(today, 2)), cadenceDays: 30, leadDays: 5, module: "household",
+        accountLinks: [
+          { label: "uFiling", url: "https://www.ufiling.co.za/" },
+          { label: "Bank app note", url: "https://www.standardbank.co.za/" },
+        ],
+        meta: {},
+      },
+    ];
+  }
+
+  function uid(prefix) {
+    return prefix + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
   /* ── date helpers (SAST-oriented display) ── */
@@ -137,6 +281,10 @@
       if (!raw) return seed();
       const data = JSON.parse(raw);
       data.modules = { ...DEFAULT_MODULES, ...(data.modules || {}) };
+      if (!Array.isArray(data.processes) || !data.processes.length) {
+        data.processes = seedProcesses(startOfDay(new Date()));
+      }
+      if (!Array.isArray(data.history)) data.history = [];
       return data;
     } catch {
       return seed();
@@ -149,121 +297,46 @@
   let state = load();
   let currentView = "today";
 
-  /* ── queue builder ── */
-  function buildQueue() {
-    const items = [];
+  /* ── queue builder (actionable processes) ── */
+  function processDue(p) {
+    return daysUntil(p.nextDue);
+  }
+  function processInQueue(p) {
+    if (p.paused) return false;
     const m = state.modules;
-
-    if (m.money) {
-      state.bills.filter((b) => b.status !== "paid").forEach((b) => {
-        const due = daysUntil(dueDateForBill(b));
-        items.push({
-          id: "q-bill-" + b.id,
-          module: "money",
-          title: b.name,
-          meta: fmtMoney(b.amount) + " · due " + fmtDate(dueDateForBill(b)),
-          severity: due < 0 ? "red" : due <= 3 ? "amber" : "green",
-          due,
-          action: "money",
-          icon: "R",
-        });
-      });
-      state.prepaid.forEach((p) => {
-        const left = p.cadenceDays - p.lastTopUpDaysAgo;
-        if (left <= 5) {
-          items.push({
-            id: "q-pre-" + p.id,
-            module: "money",
-            title: p.type + " top-up",
-            meta: left <= 0 ? "Overdue cadence" : "Due in ~" + left + " days",
-            severity: left <= 0 ? "red" : "amber",
-            due: left,
-            action: "money",
-            icon: "⚡",
-          });
-        }
-      });
+    if (p.module && m[p.module] === false) return false;
+    const lead = p.leadDays != null ? p.leadDays : (PROCESS_TYPES[p.type] || PROCESS_TYPES.custom).leadDays;
+    const due = processDue(p) <= lead;
+    if (due && p.type === "pay_bill" && p.meta && p.meta.billId) {
+      const bill = state.bills.find((b) => b.id === p.meta.billId);
+      if (bill && bill.status === "paid" && processDue(p) <= lead) bill.status = "due";
     }
-
-    if (m.vehicle) {
-      const d = daysUntil(state.vehicle.discExpiry);
-      items.push({
-        id: "q-disc",
-        module: "vehicle",
-        title: "Licence disc renewal",
-        meta: d < 0 ? "Expired" : d + " days left · " + state.vehicle.reg,
-        severity: d <= 7 ? "red" : d <= 30 ? "amber" : "green",
-        due: d,
-        action: "vehicle",
-        icon: "▣",
-      });
-      const svc = serviceProgress();
-      if (svc.pct >= 80) {
-        items.push({
-          id: "q-svc",
-          module: "vehicle",
-          title: "Vehicle service window",
-          meta: svc.label,
-          severity: svc.pct >= 100 ? "red" : "amber",
-          due: svc.pct >= 100 ? 0 : 14,
-          action: "vehicle",
-          icon: "🔧",
-        });
+    if (due && p.type === "payroll") state.payrollApproved = false;
+    if (due && p.type === "tax_deadline" && p.meta && p.meta.taxId) {
+      const t = state.tax.find((x) => x.id === p.meta.taxId);
+      if (t && t.status === "submitted") {
+        t.status = "open";
+        t.prepDone = 0;
       }
     }
-
-    if (m.tax) {
-      state.tax.forEach((t) => {
-        const d = daysUntil(t.dueAt);
-        if (d <= 45) {
-          items.push({
-            id: "q-tax-" + t.id,
-            module: "tax",
-            title: t.label,
-            meta: "Prep " + t.prepDone + "/" + t.prepTotal + " · " + fmtDate(t.dueAt),
-            severity: d <= 7 ? "red" : d <= 21 ? "amber" : "green",
-            due: d,
-            action: "tax",
-            icon: "📋",
-          });
-        }
-      });
-    }
-
-    if (m.household && state.workers.length) {
-      const pay = state.workers[0].nextPay;
-      const d = daysUntil(pay);
+    return due;
+  }
+  function buildQueue() {
+    const items = [];
+    (state.processes || []).filter(processInQueue).forEach((p) => {
+      const due = processDue(p);
+      const def = PROCESS_TYPES[p.type] || PROCESS_TYPES.custom;
       items.push({
-        id: "q-pay",
-        module: "household",
-        title: state.payrollApproved ? "Payroll approved — mark paid on day" : "Employer payday — Approve payroll",
-        meta: state.workers.length + " workers · " + fmtDate(pay),
-        severity: state.payrollApproved ? "green" : d <= 1 ? "red" : "amber",
-        due: d,
-        action: "household",
-        icon: "👥",
+        id: "q-" + p.id,
+        processId: p.id,
+        module: p.module || "docs",
+        title: p.title,
+        meta: (def.label || p.type) + " · due " + fmtDate(p.nextDue) + (p.accountLinks && p.accountLinks.length ? " · link" : ""),
+        severity: due < 0 ? "red" : due <= 3 ? "amber" : "green",
+        due,
+        icon: def.icon || "◎",
       });
-    }
-
-    if (m.docs) {
-      state.docs.forEach((doc) => {
-        if (!doc.expiresAt) return;
-        const d = daysUntil(doc.expiresAt);
-        if (d <= 30) {
-          items.push({
-            id: "q-doc-" + doc.id,
-            module: "docs",
-            title: "Doc expiring: " + doc.title,
-            meta: fmtDate(doc.expiresAt),
-            severity: d <= 7 ? "red" : "amber",
-            due: d,
-            action: "docs",
-            icon: "📄",
-          });
-        }
-      });
-    }
-
+    });
     items.sort((a, b) => a.due - b.due || a.title.localeCompare(b.title));
     return items;
   }
@@ -380,15 +453,15 @@
   function renderToday() {
     $("#today-date").textContent = todayLabel();
     const queue = buildQueue();
-    $("#today-count").innerHTML = '<span class="dot"></span> ' + queue.length + " items";
+    $("#today-count").innerHTML = '<span class="dot"></span> ' + queue.length + " due";
     const root = $("#today-queue");
     if (!queue.length) {
-      root.innerHTML = '<div class="empty">Nothing urgent — autopilot is clear. Toggle modules in Settings if this looks empty.</div>';
+      root.innerHTML = '<div class="empty">Nothing due — all processes are ahead of their lead window. Add one below or wait for the next cadence.</div>';
     } else {
       root.innerHTML = queue
         .map(
           (item) => `
-        <button type="button" class="row sev-${item.severity}" data-goto="${item.action}">
+        <button type="button" class="row sev-${item.severity}" data-process="${item.processId}">
           <div class="row-icon">${item.icon}</div>
           <div class="row-body">
             <div class="row-title">${esc(item.title)}</div>
@@ -417,6 +490,26 @@
         )
         .join("");
     }
+
+    renderHistoryPanel($("#history-panel"), 5);
+  }
+
+  function renderHistoryPanel(el, limit) {
+    if (!el) return;
+    const hist = (state.history || []).slice(0, limit || 8);
+    if (!hist.length) {
+      el.innerHTML = '<div class="empty">No completions yet — run a process from the queue</div>';
+      return;
+    }
+    el.innerHTML = hist
+      .map(
+        (h) => `
+      <div class="history-item">
+        <div><strong>${esc(h.title)}</strong> · done</div>
+        <div class="h-meta">${fmtDate(h.completedAt)} · next ${fmtDate(h.nextDueSet)}${h.note ? " · " + esc(h.note) : ""}</div>
+      </div>`
+      )
+      .join("");
   }
 
   function renderMoney() {
@@ -651,6 +744,28 @@
       </label>`
       )
       .join("");
+
+    const pl = $("#process-list");
+    if (pl) {
+      const procs = state.processes || [];
+      pl.innerHTML =
+        procs
+          .map((p) => {
+            const def = PROCESS_TYPES[p.type] || PROCESS_TYPES.custom;
+            const links = (p.accountLinks || []).map((a) => esc(a.label)).join(", ") || "no account link";
+            return `
+        <button type="button" class="row" data-edit-process="${p.id}">
+          <div class="row-icon">${def.icon}</div>
+          <div class="row-body">
+            <div class="row-title">${esc(p.title)}</div>
+            <div class="row-meta">${esc(def.label)} · every ${p.cadenceDays}d · next ${fmtDate(p.nextDue)} · ${links}</div>
+          </div>
+          <div class="row-right"><span class="badge muted">Edit</span></div>
+        </button>`;
+          })
+          .join("") || '<div class="empty">No processes — add one</div>';
+    }
+    renderHistoryPanel($("#history-list-full"), 20);
   }
 
   function render() {
@@ -665,7 +780,381 @@
     if (currentView === "settings") renderSettings();
   }
 
-  function esc(s) {
+
+  /* ── ProcessRunner ── */
+  let prState = null; // { processId, phaseIndex, answers, suggestedNext }
+
+  function getProcess(id) {
+    return (state.processes || []).find((p) => p.id === id);
+  }
+
+  function prPhases(proc) {
+    const def = PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom;
+    const steps = def.steps || [];
+    return ["start", ...steps.map((_, i) => "step:" + i), "done", "nextdue"];
+  }
+
+  function openProcessRunner(processId) {
+    const proc = getProcess(processId);
+    if (!proc) {
+      toast("Process not found");
+      return;
+    }
+    prState = { processId, phaseIndex: 0, answers: {}, checks: {} };
+    $("#process-runner").classList.add("open");
+    $("#process-runner").setAttribute("aria-hidden", "false");
+    renderProcessRunner();
+  }
+
+  function closeProcessRunner() {
+    prState = null;
+    $("#process-runner").classList.remove("open");
+    $("#process-runner").setAttribute("aria-hidden", "true");
+  }
+
+  function suggestNextDue(proc) {
+    const days = Number(proc.cadenceDays) || (PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom).defaultCadenceDays || 30;
+    return isoDate(addDays(new Date(), days));
+  }
+
+  function renderProcessRunner() {
+    if (!prState) return;
+    const proc = getProcess(prState.processId);
+    if (!proc) return closeProcessRunner();
+    const def = PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom;
+    const phases = prPhases(proc);
+    const phase = phases[prState.phaseIndex];
+    const total = phases.length;
+    $("#pr-title").textContent = proc.title;
+    $("#pr-badge").textContent = prState.phaseIndex + 1 + "/" + total;
+
+    const stepper = $("#pr-stepper");
+    stepper.innerHTML = phases
+      .map((_, i) => `<span class="${i < prState.phaseIndex ? "done" : i === prState.phaseIndex ? "on" : ""}"></span>`)
+      .join("");
+
+    const body = $("#pr-body");
+    const actions = $("#pr-actions");
+    let html = "";
+    let act = "";
+
+    if (phase === "start") {
+      html = `
+        <div class="pr-phase-label">Start</div>
+        <div class="pr-title">${esc(proc.title)}</div>
+        <div class="pr-meta">${esc(def.label)} · due ${fmtDate(proc.nextDue)} · cadence every ${proc.cadenceDays} days</div>
+        <div class="pr-card">
+          <h4>What happens</h4>
+          <p>This is a guided process (${def.steps.length} steps). On complete you confirm the next due date — the item returns to Today when that date approaches.</p>
+          <p style="margin-top:8px;font-size:12px;color:var(--muted)">${esc(def.disclaimer || "")}</p>
+        </div>
+        ${renderAccountLinks(proc)}
+        ${proc.meta && proc.meta.amount ? `<div class="pr-card"><h4>Amount</h4><p>${fmtMoney(proc.meta.amount)}${proc.meta.accountRef ? " · ref " + esc(proc.meta.accountRef) : ""}</p></div>` : ""}
+      `;
+      act = `
+        <button type="button" class="btn btn-ghost" id="pr-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="pr-next">Start →</button>
+      `;
+    } else if (phase.startsWith("step:")) {
+      const si = Number(phase.split(":")[1]);
+      const step = def.steps[si];
+      html = `
+        <div class="pr-phase-label">Step ${si + 1} of ${def.steps.length}</div>
+        <div class="pr-title">${esc(step.title)}</div>
+        <div class="pr-meta">${esc(step.body)}</div>
+        ${si === 1 || step.key === "account" || step.key === "efiling" || step.key === "visit" || step.key === "topup" || step.key === "approve" ? renderAccountLinks(proc) : ""}
+        ${
+          step.checks
+            ? `<div class="pr-card">${step.checks
+                .map(
+                  (c, i) => `
+              <label class="pr-check"><input type="checkbox" data-pr-check="${si}-${i}" ${prState.checks[si + "-" + i] ? "checked" : ""} /><span>${esc(c)}</span></label>`
+                )
+                .join("")}</div>`
+            : ""
+        }
+        ${
+          step.key === "prep"
+            ? `<div class="form-row"><label>Prep notes (optional)</label><textarea id="pr-note" placeholder="Docs gathered…">${esc(prState.answers.note || "")}</textarea></div>`
+            : ""
+        }
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">${esc(def.disclaimer || "")}</p>
+      `;
+      act = `
+        <button type="button" class="btn btn-ghost" id="pr-back">Back</button>
+        <button type="button" class="btn btn-primary" id="pr-next">Continue →</button>
+      `;
+    } else if (phase === "done") {
+      html = `
+        <div class="pr-done-hero">
+          <div class="big">✓</div>
+          <h4>Marked done</h4>
+          <p class="pr-meta">Nice — ${esc(proc.title)} is complete for this cycle.</p>
+        </div>
+        <div class="pr-card">
+          <h4>Next</h4>
+          <p>Set the next expiry / due date so this process returns to Today automatically.</p>
+        </div>
+      `;
+      act = `
+        <button type="button" class="btn btn-ghost" id="pr-back">Back</button>
+        <button type="button" class="btn btn-primary" id="pr-next">Set next due →</button>
+      `;
+    } else if (phase === "nextdue") {
+      const suggested = prState.suggestedNext || suggestNextDue(proc);
+      prState.suggestedNext = suggested;
+      html = `
+        <div class="pr-phase-label">Next due</div>
+        <div class="pr-title">When should this return?</div>
+        <div class="pr-meta">Suggested from cadence (every ${proc.cadenceDays} days). Confirm or adjust.</div>
+        <div class="form-row"><label>Next due date</label>
+          <input type="date" id="pr-next-due" value="${suggested}" />
+        </div>
+        <div class="form-row"><label>Cadence (days)</label>
+          <input type="number" id="pr-cadence" value="${proc.cadenceDays}" min="1" />
+        </div>
+        <div class="form-row"><label>Note (optional)</label>
+          <input type="text" id="pr-final-note" placeholder="e.g. Paid via FNB" value="${esc(prState.answers.note || "")}" />
+        </div>
+        <div class="pr-card"><p style="font-size:12px;color:var(--muted)">Item reappears in Today when within its lead window (${proc.leadDays != null ? proc.leadDays : def.leadDays} days before due). Reminder panel updates automatically.</p></div>
+      `;
+      act = `
+        <button type="button" class="btn btn-ghost" id="pr-back">Back</button>
+        <button type="button" class="btn btn-primary" id="pr-finish">Confirm &amp; close</button>
+      `;
+    }
+
+    body.innerHTML = html;
+    actions.innerHTML = act;
+
+    $("#pr-cancel")?.addEventListener("click", closeProcessRunner);
+    $("#pr-back")?.addEventListener("click", () => {
+      if (prState.phaseIndex > 0) {
+        prState.phaseIndex--;
+        renderProcessRunner();
+      }
+    });
+    $("#pr-next")?.addEventListener("click", () => {
+      if (!validatePrStep(proc, phase, def)) return;
+      capturePrAnswers();
+      prState.phaseIndex++;
+      renderProcessRunner();
+    });
+    $("#pr-finish")?.addEventListener("click", () => finishProcess(proc));
+    body.querySelectorAll("[data-pr-check]").forEach((el) => {
+      el.addEventListener("change", () => {
+        prState.checks[el.getAttribute("data-pr-check")] = el.checked;
+      });
+    });
+    body.querySelectorAll("[data-open-link]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const url = btn.getAttribute("data-open-link");
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
+      });
+    });
+  }
+
+  function renderAccountLinks(proc) {
+    const links = proc.accountLinks || [];
+    if (!links.length) {
+      return `<div class="pr-card"><p style="font-size:12px;color:var(--muted)">No account link yet — add one in Settings → Recurring processes.</p></div>`;
+    }
+    return (
+      `<div class="pr-card"><h4>Account links</h4>` +
+      links
+        .map(
+          (a, i) =>
+            `<button type="button" class="pr-link-btn" data-open-link="${esc(a.url)}"><span>Open account · ${esc(a.label)}</span><span>↗</span></button>`
+        )
+        .join("") +
+      `</div>`
+    );
+  }
+
+  function validatePrStep(proc, phase, def) {
+    if (!phase.startsWith("step:")) return true;
+    const si = Number(phase.split(":")[1]);
+    const step = def.steps[si];
+    if (step.checks) {
+      for (let i = 0; i < step.checks.length; i++) {
+        if (!prState.checks[si + "-" + i]) {
+          toast("Tick all confirmations to continue");
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function capturePrAnswers() {
+    const note = document.getElementById("pr-note");
+    if (note) prState.answers.note = note.value.trim();
+  }
+
+  function finishProcess(proc) {
+    const nextEl = document.getElementById("pr-next-due");
+    const cadEl = document.getElementById("pr-cadence");
+    const noteEl = document.getElementById("pr-final-note");
+    const nextDue = (nextEl && nextEl.value) || suggestNextDue(proc);
+    const cadence = Math.max(1, Number(cadEl && cadEl.value) || proc.cadenceDays);
+    const note = (noteEl && noteEl.value.trim()) || prState.answers.note || "";
+
+    proc.nextDue = nextDue;
+    proc.cadenceDays = cadence;
+    proc.lastCompletedAt = isoDate(new Date());
+
+    // Sync underlying demo entities
+    if (proc.type === "pay_bill" && proc.meta && proc.meta.billId) {
+      const bill = state.bills.find((b) => b.id === proc.meta.billId);
+      if (bill) bill.status = "paid";
+    }
+    if (proc.type === "renew_disc") {
+      state.vehicle.discExpiry = nextDue;
+      const doc = state.docs.find((d) => d.id === "d2");
+      if (doc) doc.expiresAt = nextDue;
+    }
+    if (proc.type === "tax_deadline" && proc.meta && proc.meta.taxId) {
+      const t = state.tax.find((x) => x.id === proc.meta.taxId);
+      if (t) {
+        t.status = "submitted";
+        t.prepDone = t.prepTotal;
+        t.dueAt = nextDue;
+      }
+    }
+    if (proc.type === "payroll") {
+      state.payrollApproved = true;
+      state.workers.forEach((w) => {
+        w.nextPay = nextDue;
+      });
+    }
+    if (proc.type === "prepaid_topup" && proc.meta && proc.meta.prepaidId) {
+      const p = state.prepaid.find((x) => x.id === proc.meta.prepaidId);
+      if (p) p.lastTopUpDaysAgo = 0;
+    }
+
+    state.history = state.history || [];
+    state.history.unshift({
+      id: uid("h"),
+      processId: proc.id,
+      title: proc.title,
+      type: proc.type,
+      completedAt: isoDate(new Date()),
+      nextDueSet: nextDue,
+      note,
+    });
+    if (state.history.length > 50) state.history.length = 50;
+
+    save();
+    closeProcessRunner();
+    render();
+    toast("Done · next due " + fmtDate(nextDue));
+  }
+
+  function openAddProcessModal(editId) {
+    const editing = editId ? getProcess(editId) : null;
+    const types = Object.keys(PROCESS_TYPES)
+      .map((k) => `<option value="${k}" ${editing && editing.type === k ? "selected" : ""}>${esc(PROCESS_TYPES[k].label)}</option>`)
+      .join("");
+    openModal(
+      editing ? "Edit process" : "Add recurring process",
+      `
+      <div class="form-row"><label>Title</label>
+        <input type="text" id="np-title" value="${editing ? esc(editing.title) : ""}" placeholder="e.g. Pay fibre bill" />
+      </div>
+      <div class="form-row"><label>Process type</label>
+        <select id="np-type">${types}</select>
+      </div>
+      <div class="form-row"><label>Next due</label>
+        <input type="date" id="np-due" value="${editing ? editing.nextDue : isoDate(addDays(new Date(), 7))}" />
+      </div>
+      <div class="form-row"><label>Cadence (days)</label>
+        <input type="number" id="np-cadence" min="1" value="${editing ? editing.cadenceDays : 30}" />
+      </div>
+      <div class="form-row"><label>Lead days (show in Today)</label>
+        <input type="number" id="np-lead" min="0" value="${editing ? editing.leadDays : 7}" />
+      </div>
+      <div class="form-row"><label>Account link label</label>
+        <input type="text" id="np-link-label" value="${editing && editing.accountLinks && editing.accountLinks[0] ? esc(editing.accountLinks[0].label) : ""}" placeholder="e.g. uFiling" />
+      </div>
+      <div class="form-row"><label>Account link URL</label>
+        <input type="url" id="np-link-url" value="${editing && editing.accountLinks && editing.accountLinks[0] ? esc(editing.accountLinks[0].url) : ""}" placeholder="https://…" />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary btn-block" id="np-save">${editing ? "Save" : "Add process"}</button>
+      </div>
+      ${editing ? `<button type="button" class="btn btn-danger btn-block" id="np-run" style="margin-top:8px">Run wizard now</button>
+                   <button type="button" class="btn btn-ghost btn-block" id="np-delete" style="margin-top:8px">Delete process</button>` : ""}
+      <p style="font-size:11px;color:var(--muted);margin-top:10px">Not tax/legal advice. Links open in a new tab — no OAuth in this demo.</p>`
+    );
+    // Hide default close flow briefly — keep close btn
+    setTimeout(() => {
+      $("#np-save")?.addEventListener("click", () => {
+        const title = $("#np-title").value.trim();
+        const type = $("#np-type").value;
+        const nextDue = $("#np-due").value || isoDate(addDays(new Date(), 7));
+        const cadenceDays = Math.max(1, Number($("#np-cadence").value) || 30);
+        const leadDays = Math.max(0, Number($("#np-lead").value) || 7);
+        const label = $("#np-link-label").value.trim();
+        const url = $("#np-link-url").value.trim();
+        if (!title) {
+          toast("Enter a title");
+          return;
+        }
+        const def = PROCESS_TYPES[type] || PROCESS_TYPES.custom;
+        const links = label && url ? [{ label, url }] : label ? [{ label, url: "#" }] : url ? [{ label: "Open account", url }] : [];
+        const moduleGuess =
+          type === "pay_bill" || type === "prepaid_topup"
+            ? "money"
+            : type === "renew_disc"
+              ? "vehicle"
+              : type === "tax_deadline"
+                ? "tax"
+                : type === "payroll"
+                  ? "household"
+                  : "docs";
+        if (editing) {
+          editing.title = title;
+          editing.type = type;
+          editing.nextDue = nextDue;
+          editing.cadenceDays = cadenceDays;
+          editing.leadDays = leadDays;
+          editing.accountLinks = links.length ? links : editing.accountLinks || [];
+          editing.module = moduleGuess;
+        } else {
+          state.processes.unshift({
+            id: uid("pr"),
+            type,
+            title,
+            nextDue,
+            cadenceDays,
+            leadDays,
+            module: moduleGuess,
+            accountLinks: links,
+            meta: {},
+          });
+        }
+        save();
+        closeModal();
+        render();
+        toast(editing ? "Process updated" : "Process added");
+      });
+      $("#np-run")?.addEventListener("click", () => {
+        closeModal();
+        openProcessRunner(editing.id);
+      });
+      $("#np-delete")?.addEventListener("click", () => {
+        if (!confirm("Delete this process?")) return;
+        state.processes = state.processes.filter((p) => p.id !== editing.id);
+        save();
+        closeModal();
+        render();
+        toast("Process deleted");
+      });
+    }, 0);
+  }
+
+
+    function esc(s) {
     return String(s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -697,6 +1186,16 @@
     const more = e.target.closest(".more-item[data-nav]");
     if (more) {
       showView(more.dataset.nav);
+      return;
+    }
+    const procBtn = e.target.closest("[data-process]");
+    if (procBtn) {
+      openProcessRunner(procBtn.getAttribute("data-process"));
+      return;
+    }
+    const editProc = e.target.closest("[data-edit-process]");
+    if (editProc) {
+      openAddProcessModal(editProc.getAttribute("data-edit-process"));
       return;
     }
     const goto = e.target.closest("[data-goto]");
@@ -844,6 +1343,10 @@
       );
     }
   });
+
+  $("#pr-close").addEventListener("click", closeProcessRunner);
+  $("#btn-add-process")?.addEventListener("click", () => openAddProcessModal());
+  $("#btn-add-process-today")?.addEventListener("click", () => openAddProcessModal());
 
   /* boot */
   save();

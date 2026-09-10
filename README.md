@@ -12,7 +12,7 @@ It is a **personal family capability showcase**. Modules adapt via Settings togg
 
 | Module | Role |
 |--------|------|
-| **Today** | Auto queue from bills, disc, tax, employer payday, doc expiry + next 5 reminders |
+| **Today** | Due **processes** (tap → guided wizard) · reminders · completion history |
 | **Money** | Bills, budget envelopes, prepaid/municipal, mark paid |
 | **Vehicle** | Licence disc countdown, service due, insurance, fuel log |
 | **Tax** | Upcoming deadline cards + prep packs (**not** filing as you) |
@@ -44,9 +44,13 @@ Or open `index.html` directly in a browser (file:// works for this demo).
 
 Files: `index.html` · `styles.css` · `app.js` · `README.md`
 
+## Guided processes (not checklists)
+
+Clicking a due item opens a **ProcessRunner** wizard: Start → steps (with optional **Open account** deep links) → Done → confirm **next due** from cadence. The item returns to Today when the next due approaches. Add/edit processes and account links in **Settings**.
+
 ## How to try
 
-1. **Today** — see the autopilot queue and reminder panel.
+1. **Today** — tap a due process → run the wizard → confirm next due; check history.
 2. **Money** — mark a bill paid (persists).
 3. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
 4. **More → Tax / Household / Docs** — prep packs, Approve payroll, vault.

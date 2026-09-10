@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1220" />
-  <meta name="description" content="Life Desk — SA household life-management autopilot demo. Sample data only. Not tax, legal or financial advice." />
+  <meta name="description" content="Life Desk — SA household guided processes (bills, disc, tax, payroll). Sample data only. Not tax, legal or financial advice." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Life Desk · Household Autopilot</title>
@@ -33,15 +33,15 @@
         <div class="view-title">
           <div>
             <h2>Today</h2>
-            <p class="sub">Autopilot queue · <span id="today-date"></span></p>
+            <p class="sub">Guided processes · <span id="today-date"></span></p>
           </div>
           <span class="badge teal" id="today-count"><span class="dot"></span> 0 due</span>
         </div>
 
         <div class="card mb-12">
           <div class="card-head">
-            <h3>Auto queue</h3>
-            <span class="badge muted">L3–L4</span>
+            <h3>Due processes</h3>
+            <span class="badge muted">tap to run</span>
           </div>
           <div class="list" id="today-queue"></div>
         </div>
@@ -54,7 +54,19 @@
           <div id="reminder-panel"></div>
         </div>
 
-        <p class="disclaimer">Not tax, legal or financial advice · Demo sample data only · App prepares &amp; reminds — you Approve money / government.</p>
+        <div class="card mb-12">
+          <div class="card-head">
+            <h3>Recent completions</h3>
+            <span class="badge muted">history</span>
+          </div>
+          <div id="history-panel"></div>
+        </div>
+
+        <div class="btn-row mb-12">
+          <button type="button" class="btn btn-ghost btn-block" id="btn-add-process-today">+ Add recurring process</button>
+        </div>
+
+        <p class="disclaimer">Not tax, legal or financial advice · Demo sample data only · App prepares &amp; reminds — you Approve money / government. Guided wizards do not file or pay for you.</p>
       </section>
 
       <!-- MONEY -->
@@ -218,11 +230,24 @@
           <div class="card-head"><h3>Module toggles</h3><span class="badge teal">adaptable</span></div>
           <div class="toggle-list" id="module-toggles"></div>
         </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Recurring processes</h3><span class="badge teal">wizard</span></div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Each item opens a guided multi-step process — not a dead checkbox. Add account deep links (uFiling, municipal portal, bank note).</p>
+          <div class="list" id="process-list"></div>
+          <button type="button" class="btn btn-primary btn-block" id="btn-add-process" style="margin-top:10px">+ Add process</button>
+        </div>
+
+        <div class="card mb-12">
+          <div class="card-head"><h3>Completion history</h3></div>
+          <div id="history-list-full"></div>
+        </div>
+
         <div class="card">
           <div class="card-head"><h3>Demo</h3></div>
           <button type="button" class="btn btn-danger btn-block" id="btn-reset-2">Reset all demo data</button>
         </div>
-        <p class="disclaimer">Flags saved in localStorage · Turning a module off hides it from nav and Today queue.</p>
+        <p class="disclaimer">Flags saved in localStorage · Turning a module off hides it from nav and Today queue · Not tax/legal advice.</p>
       </section>
     </main>
 
@@ -241,6 +266,21 @@
       <h3 id="modal-title">About</h3>
       <div id="modal-body"></div>
       <button type="button" class="btn btn-primary btn-block" id="modal-close" style="margin-top:12px">Close</button>
+    </div>
+  </div>
+
+  
+  <!-- ProcessRunner wizard -->
+  <div class="pr-overlay" id="process-runner" aria-hidden="true">
+    <div class="pr-sheet" role="dialog" aria-modal="true" aria-labelledby="pr-title">
+      <div class="pr-head">
+        <button type="button" class="icon-btn" id="pr-close" aria-label="Close wizard">✕</button>
+        <h3 id="pr-title">Process</h3>
+        <span class="badge muted" id="pr-badge">1/1</span>
+      </div>
+      <div class="pr-stepper" id="pr-stepper" aria-hidden="true"></div>
+      <div class="pr-body" id="pr-body"></div>
+      <div class="pr-actions" id="pr-actions"></div>
     </div>
   </div>
 
