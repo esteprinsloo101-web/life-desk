@@ -4,7 +4,120 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "life-desk-v3";
+  const STORAGE_KEY = "life-desk-v4";
+
+  /* PLATFORM_BAR_2026_09_11 */
+  const SCIENCE_TIPS = [
+  {
+    "h": "Bill cadence experiment",
+    "body": "Pick one due bill. Pay 3 days earlier this month. Note stress and cash buffer. Keep if calmer.",
+    "method": "Method: single-variable change \u00b7 Limit: sample of one household"
+  },
+  {
+    "h": "Prepaid top-up window",
+    "body": "Log meter days-to-empty for 2 cycles. Set lead days = average \u2212 3.",
+    "method": "Method: simple average \u00b7 Limit: season and guests change use"
+  },
+  {
+    "h": "Kids calendar sync",
+    "body": "Put school fees + one activity fee on the same payday week. Fewer surprise cash hits.",
+    "method": "Method: calendar batching \u00b7 Limit: school term dates vary"
+  }
+];
+  const PURPOSE_MODULE_PRESETS = {
+  "household": {
+    "money": true,
+    "vehicle": true,
+    "tax": true,
+    "household": true,
+    "docs": true,
+    "retire": true,
+    "insurance": true,
+    "kids": true,
+    "homeops": true,
+    "pets": false,
+    "science": true
+  },
+  "farm": {
+    "money": true,
+    "vehicle": true,
+    "tax": true,
+    "household": false,
+    "docs": true,
+    "retire": true,
+    "insurance": true,
+    "kids": false,
+    "homeops": true,
+    "pets": true,
+    "science": true
+  },
+  "trade": {
+    "money": true,
+    "vehicle": true,
+    "tax": true,
+    "household": false,
+    "docs": true,
+    "retire": true,
+    "insurance": true,
+    "kids": false,
+    "homeops": false,
+    "pets": false,
+    "science": true
+  },
+  "rentals": {
+    "money": true,
+    "vehicle": false,
+    "tax": true,
+    "household": false,
+    "docs": true,
+    "retire": false,
+    "insurance": true,
+    "kids": false,
+    "homeops": true,
+    "pets": false,
+    "science": true
+  },
+  "stokvel": {
+    "money": true,
+    "vehicle": false,
+    "tax": false,
+    "household": false,
+    "docs": true,
+    "retire": true,
+    "insurance": true,
+    "kids": false,
+    "homeops": false,
+    "pets": false,
+    "science": true
+  },
+  "flood": {
+    "money": false,
+    "vehicle": false,
+    "tax": false,
+    "household": false,
+    "docs": true,
+    "retire": false,
+    "insurance": true,
+    "kids": false,
+    "homeops": false,
+    "pets": false,
+    "science": true
+  },
+  "decisions": {
+    "money": true,
+    "vehicle": false,
+    "tax": true,
+    "household": false,
+    "docs": true,
+    "retire": true,
+    "insurance": false,
+    "kids": false,
+    "homeops": false,
+    "pets": false,
+    "science": true
+  }
+};
+
   const TZ = "Africa/Johannesburg";
 
   /* ── Process types (guided wizards, not checklists) ── */
@@ -71,6 +184,143 @@
         { key: "confirm", title: "Confirm top-up", body: "After you return, confirm the top-up. Amount is optional.", checks: ["Top-up completed"], amountOptional: true },
       ],
     },
+    retire_contrib: {
+      label: "Retirement contribution",
+      icon: "📈",
+      defaultCadenceDays: 30,
+      leadDays: 5,
+      moneyProcess: true,
+      disclaimer: "Not financial advice. You contribute — Life Desk only reminds. Confirm RA/pension/TFSA rules with a licensed adviser.",
+      steps: [
+        { key: "review", title: "Review contribution", body: "Confirm product (RA / pension / TFSA-style), amount and debit date." },
+        { key: "pay", title: "Open account / pay", body: "Open your product portal or bank debit note. Complete contribution yourself.", openPay: true },
+        { key: "confirm", title: "Confirm contributed", body: "Mark when debit / payment is done.", checks: ["Contribution paid or debit confirmed"], amountOptional: true },
+      ],
+    },
+    retire_statement: {
+      label: "Retirement statement check",
+      icon: "📄",
+      defaultCadenceDays: 90,
+      leadDays: 14,
+      disclaimer: "Not financial advice. Checking a statement is not a portfolio review.",
+      steps: [
+        { key: "open", title: "Open statement", body: "Download or view the latest statement from your provider portal." },
+        { key: "check", title: "Check basics", body: "Confirm contributions received, fees line, and beneficiary details on file.", checks: ["Contributions look present", "Beneficiaries noted"] },
+        { key: "confirm", title: "Log checked", body: "Mark statement reviewed for this quarter.", checks: ["Statement checked"] },
+      ],
+    },
+    insurance_premium: {
+      label: "Insurance premium",
+      icon: "🛡",
+      defaultCadenceDays: 30,
+      leadDays: 5,
+      moneyProcess: true,
+      disclaimer: "Not insurance advice. You pay — Life Desk opens your stored payment link.",
+      steps: [
+        { key: "review", title: "Review premium", body: "Confirm policy, premium and due date." },
+        { key: "pay", title: "Open payment", body: "Open insurer / medical aid payment link and pay yourself.", openPay: true },
+        { key: "confirm", title: "Confirm paid", body: "Mark premium paid.", checks: ["Premium paid / debit confirmed"], amountOptional: true },
+      ],
+    },
+    insurance_renew: {
+      label: "Policy renewal",
+      icon: "🔁",
+      defaultCadenceDays: 365,
+      leadDays: 30,
+      disclaimer: "Not insurance advice. Confirm cover with your broker before renewing.",
+      steps: [
+        { key: "docs", title: "Gather policy pack", body: "Schedule, excesses, and any claims notes." },
+        { key: "review", title: "Review cover", body: "Check sums insured still match home / car / contents.", checks: ["Cover amounts still make sense"] },
+        { key: "confirm", title: "Confirm renewed", body: "Mark when renewal is done.", checks: ["Policy renewed or cancelled intentionally"] },
+      ],
+    },
+    school_fee: {
+      label: "School / activity fee",
+      icon: "🎒",
+      defaultCadenceDays: 30,
+      leadDays: 7,
+      moneyProcess: true,
+      disclaimer: "Not financial advice. Confirm fee amounts with the school or activity provider.",
+      steps: [
+        { key: "review", title: "Review fee", body: "Confirm child, school/activity, amount and due date." },
+        { key: "pay", title: "Open payment", body: "Open school portal / PayFast / bank beneficiary and pay yourself.", openPay: true },
+        { key: "confirm", title: "Confirm paid", body: "Mark fee paid.", checks: ["Fee paid"], amountOptional: true },
+      ],
+    },
+    kids_clinic: {
+      label: "Kids clinic / medical",
+      icon: "🩺",
+      defaultCadenceDays: 180,
+      leadDays: 14,
+      disclaimer: "Not medical advice. Life Desk only reminds — follow your clinician.",
+      steps: [
+        { key: "prep", title: "Prep", body: "Note child, clinic, and reason (checkup / vaccine / follow-up)." },
+        { key: "go", title: "Attend", body: "Open maps / clinic link if stored. Attend appointment." },
+        { key: "confirm", title: "Log visit", body: "Mark attended and set next due if told.", checks: ["Visit done"] },
+      ],
+    },
+    kids_permission: {
+      label: "Permission slip / event",
+      icon: "✍️",
+      defaultCadenceDays: 0,
+      leadDays: 5,
+      disclaimer: "Ops reminder only — not legal advice.",
+      steps: [
+        { key: "read", title: "Read slip", body: "Confirm date, cost, and transport." },
+        { key: "sign", title: "Sign / pay", body: "Sign and pay any fee via stored link if needed.", openPay: true },
+        { key: "confirm", title: "Confirm returned", body: "Mark slip returned to school.", checks: ["Slip returned"] },
+      ],
+    },
+    grocery_loop: {
+      label: "Groceries budget loop",
+      icon: "🛒",
+      defaultCadenceDays: 7,
+      leadDays: 2,
+      moneyProcess: true,
+      disclaimer: "Budget aid only — not financial advice.",
+      steps: [
+        { key: "plan", title: "Plan shop", body: "Check envelope left and list staples." },
+        { key: "shop", title: "Shop / pay", body: "Open grocery / wallet link if you use one. Stay near budget.", openPay: true },
+        { key: "confirm", title: "Log spend", body: "Note approx spend for the week.", checks: ["Shop done"], amountOptional: true },
+      ],
+    },
+    home_maint: {
+      label: "Home maintenance",
+      icon: "🔧",
+      defaultCadenceDays: 90,
+      leadDays: 7,
+      disclaimer: "Ops checklist — not a contractor quote.",
+      steps: [
+        { key: "inspect", title: "Inspect", body: "Check the listed item (geyser, gutters, locks, etc.)." },
+        { key: "fix", title: "Fix or book", body: "DIY or open contractor WhatsApp / link.", checks: ["Issue handled or booked"] },
+        { key: "confirm", title: "Confirm done", body: "Mark complete and set next due.", checks: ["Maintenance logged"] },
+      ],
+    },
+    adult_clinic: {
+      label: "Adult medical appointment",
+      icon: "🏥",
+      defaultCadenceDays: 365,
+      leadDays: 14,
+      disclaimer: "Not medical advice.",
+      steps: [
+        { key: "prep", title: "Prep", body: "Note who, clinic, and reason." },
+        { key: "go", title: "Attend", body: "Attend appointment. Open maps link if stored." },
+        { key: "confirm", title: "Log visit", body: "Mark done.", checks: ["Appointment done"] },
+      ],
+    },
+    pet_care: {
+      label: "Pet care",
+      icon: "🐾",
+      defaultCadenceDays: 30,
+      leadDays: 7,
+      disclaimer: "Not veterinary advice.",
+      steps: [
+        { key: "review", title: "Review need", body: "Food refill, flea treatment reminder, or vet checkup — your note." },
+        { key: "do", title: "Do / book", body: "Open vet / pet shop link if stored." },
+        { key: "confirm", title: "Confirm done", body: "Mark complete.", checks: ["Pet care done"] },
+      ],
+    },
+
     custom: {
       label: "Custom process",
       icon: "◎",
@@ -91,12 +341,19 @@
     tax: true,
     household: true,
     docs: true,
+    retire: true,
+    insurance: true,
+    kids: true,
+    homeops: true,
+    pets: false,
+    science: true,
   };
 
   function seed() {
     const today = startOfDay(new Date());
     return {
       modules: { ...DEFAULT_MODULES },
+      profile: { onboarded: false, city: "", purpose: "", updatedAt: null },
       household: {
         name: "Prinsloo household",
         city: "Bloemfontein",
@@ -152,6 +409,52 @@
         { id: "d4", title: "Thandi — contract + ID", category: "Household", expiresAt: isoDate(addDays(today, 200)), module: "household" },
         { id: "d5", title: "Provisional tax prep pack", category: "Tax", expiresAt: isoDate(addDays(today, 24)), module: "tax" },
         { id: "d6", title: "Medical aid membership", category: "Health", expiresAt: null, module: "money" },
+      ],
+      retirement: [
+        { id: "r1", name: "RA — Discovery Invest", kind: "RA", amount: 2500, dueDay: 25, portal: "https://www.discovery.co.za/", note: "Monthly debit" },
+        { id: "r2", name: "Pension — employer", kind: "Pension", amount: 0, dueDay: 25, portal: "https://www.sarsefiling.co.za/", note: "Payslip check" },
+        { id: "r3", name: "TFSA-style — EasyEquities", kind: "TFSA", amount: 1000, dueDay: 1, portal: "https://www.easyequities.co.za/", note: "Voluntary top-up" },
+      ],
+      insurance: [
+        { id: "ins1", name: "Discovery medical aid", kind: "Medical aid", amount: 3850, dueDay: 1, renewAt: null, portal: "https://www.discovery.co.za/medical-aid/pay-contribution/" },
+        { id: "ins2", name: "Life cover — Sanlam", kind: "Life", amount: 890, dueDay: 7, renewAt: isoDate(addDays(today, 200)), portal: "https://www.sanlam.co.za/" },
+        { id: "ins3", name: "Funeral — family plan", kind: "Funeral", amount: 320, dueDay: 5, renewAt: isoDate(addDays(today, 340)), portal: "https://www.fnb.co.za/" },
+        { id: "ins4", name: "Household contents", kind: "Contents", amount: 280, dueDay: 3, renewAt: isoDate(addDays(today, 95)), portal: "https://www.outsurance.co.za/" },
+        { id: "ins5", name: "Buildings — bond insurance", kind: "Buildings", amount: 450, dueDay: 1, renewAt: isoDate(addDays(today, 120)), portal: "https://www.standardbank.co.za/" },
+        { id: "ins6", name: "Car — OUTsurance", kind: "Car", amount: 1120, dueDay: 3, renewAt: isoDate(addDays(today, 95)), portal: "https://www.outsurance.co.za/my-policy/make-a-payment/" },
+        { id: "ins7", name: "Gap cover", kind: "Gap", amount: 210, dueDay: 1, renewAt: isoDate(addDays(today, 180)), portal: "https://www.turnberry.co.za/" },
+      ],
+      kids: [
+        { id: "k1", name: "Lerato", age: 9, school: "Primary · Grade 3", activities: ["Netball Tue 15:00", "Piano Thu 16:00"] },
+        { id: "k2", name: "Johan", age: 14, school: "High school · Grade 8", activities: ["Rugby Wed 15:30", "Maths extra Mon 17:00"] },
+      ],
+      kidFees: [
+        { id: "kf1", kidId: "k1", title: "School fees — Lerato", amount: 2100, dueDay: 15, portal: "https://www.payfast.co.za/eng/process?demo=school-lerato" },
+        { id: "kf2", kidId: "k2", title: "School fees — Johan", amount: 2800, dueDay: 15, portal: "https://www.payfast.co.za/eng/process?demo=school-johan" },
+        { id: "kf3", kidId: "k1", title: "Piano lessons", amount: 450, dueDay: 28, portal: "https://wa.me/27820001111" },
+        { id: "kf4", kidId: "k2", title: "Rugby club fees", amount: 350, dueDay: 10, portal: "https://wa.me/27820002222" },
+      ],
+      kidEvents: [
+        { id: "ke1", kidId: "k1", title: "Clinic — booster reminder", at: isoDate(addDays(today, 9)), kind: "clinic" },
+        { id: "ke2", kidId: "k2", title: "Permission slip — rugby tour", at: isoDate(addDays(today, 4)), kind: "permission", portal: "https://wa.me/27820002222" },
+        { id: "ke3", kidId: "k1", title: "School concert", at: isoDate(addDays(today, 21)), kind: "event" },
+      ],
+      groceries: { cap: 6500, spent: 4120, cadenceDays: 7 },
+      maintenance: [
+        { id: "m1", title: "Geyser pressure check", nextDue: isoDate(addDays(today, 12)) },
+        { id: "m2", title: "Gutters clear (rain season)", nextDue: isoDate(addDays(today, 40)) },
+        { id: "m3", title: "Smoke alarm battery", nextDue: isoDate(addDays(today, 3)) },
+      ],
+      adultAppts: [
+        { id: "aa1", who: "Parent A", title: "GP checkup", at: isoDate(addDays(today, 16)) },
+        { id: "aa2", who: "Parent B", title: "Dentist", at: isoDate(addDays(today, 33)) },
+      ],
+      pets: [
+        { id: "pet1", name: "Bella (dog)", note: "Flea treatment monthly", nextDue: isoDate(addDays(today, 8)), portal: "https://wa.me/27510009999" },
+      ],
+      schoolCalendar: [
+        { term: "Term 3", note: "Closes in ~3 weeks (sample)" },
+        { term: "Term 4", note: "Opens mid-October (sample Highveld)" },
       ],
       processes: seedProcesses(today),
       history: [],
@@ -223,6 +526,90 @@
         ],
         meta: {},
       },
+      {
+        id: "pr-ra1", type: "retire_contrib", title: "RA contribution — Discovery Invest",
+        nextDue: isoDate(addDays(today, 8)), cadenceDays: 30, leadDays: 5, module: "retire",
+        accountLinks: [{ label: "Discovery Invest", url: "https://www.discovery.co.za/" }],
+        meta: { amount: 2500, retireId: "r1" },
+      },
+      {
+        id: "pr-ra-stmt", type: "retire_statement", title: "RA statement check (quarter)",
+        nextDue: isoDate(addDays(today, 20)), cadenceDays: 90, leadDays: 14, module: "retire",
+        accountLinks: [{ label: "Discovery Invest", url: "https://www.discovery.co.za/" }],
+        meta: { retireId: "r1" },
+      },
+      {
+        id: "pr-ins-med", type: "insurance_premium", title: "Medical aid premium",
+        nextDue: isoDate(addDays(today, 1)), cadenceDays: 30, leadDays: 5, module: "insurance",
+        accountLinks: [{ label: "Discovery pay contribution", url: "https://www.discovery.co.za/medical-aid/pay-contribution/" }],
+        meta: { amount: 3850, insuranceId: "ins1" },
+      },
+      {
+        id: "pr-ins-car", type: "insurance_premium", title: "Car insurance premium",
+        nextDue: isoDate(addDays(today, 3)), cadenceDays: 30, leadDays: 5, module: "insurance",
+        accountLinks: [{ label: "OUTsurance pay", url: "https://www.outsurance.co.za/my-policy/make-a-payment/" }],
+        meta: { amount: 1120, insuranceId: "ins6" },
+      },
+      {
+        id: "pr-ins-renew", type: "insurance_renew", title: "Contents policy renewal",
+        nextDue: isoDate(addDays(today, 95)), cadenceDays: 365, leadDays: 30, module: "insurance",
+        accountLinks: [{ label: "OUTsurance policy", url: "https://www.outsurance.co.za/" }],
+        meta: { insuranceId: "ins4" },
+      },
+      {
+        id: "pr-fee-k1", type: "school_fee", title: "School fees — Lerato",
+        nextDue: isoDate(addDays(today, 5)), cadenceDays: 30, leadDays: 7, module: "kids",
+        accountLinks: [{ label: "School PayFast", url: "https://www.payfast.co.za/eng/process?demo=school-lerato" }],
+        meta: { amount: 2100, kidFeeId: "kf1" },
+      },
+      {
+        id: "pr-fee-k2", type: "school_fee", title: "School fees — Johan",
+        nextDue: isoDate(addDays(today, 5)), cadenceDays: 30, leadDays: 7, module: "kids",
+        accountLinks: [{ label: "School PayFast", url: "https://www.payfast.co.za/eng/process?demo=school-johan" }],
+        meta: { amount: 2800, kidFeeId: "kf2" },
+      },
+      {
+        id: "pr-piano", type: "school_fee", title: "Piano lessons — Lerato",
+        nextDue: isoDate(addDays(today, 14)), cadenceDays: 30, leadDays: 5, module: "kids",
+        accountLinks: [{ label: "WhatsApp teacher", url: "https://wa.me/27820001111" }],
+        meta: { amount: 450, kidFeeId: "kf3" },
+      },
+      {
+        id: "pr-slip", type: "kids_permission", title: "Permission slip — rugby tour",
+        nextDue: isoDate(addDays(today, 4)), cadenceDays: 365, leadDays: 5, module: "kids",
+        accountLinks: [{ label: "Coach WhatsApp", url: "https://wa.me/27820002222" }],
+        meta: { eventId: "ke2" },
+      },
+      {
+        id: "pr-clinic-k", type: "kids_clinic", title: "Clinic — Lerato booster",
+        nextDue: isoDate(addDays(today, 9)), cadenceDays: 365, leadDays: 14, module: "kids",
+        accountLinks: [],
+        meta: { eventId: "ke1" },
+      },
+      {
+        id: "pr-grocery", type: "grocery_loop", title: "Weekly groceries budget",
+        nextDue: isoDate(addDays(today, 2)), cadenceDays: 7, leadDays: 2, module: "homeops",
+        accountLinks: [{ label: "Checkers Sixty60 stub", url: "https://www.checkers.co.za/" }],
+        meta: {},
+      },
+      {
+        id: "pr-maint", type: "home_maint", title: "Smoke alarm battery",
+        nextDue: isoDate(addDays(today, 3)), cadenceDays: 180, leadDays: 7, module: "homeops",
+        accountLinks: [],
+        meta: { maintId: "m3" },
+      },
+      {
+        id: "pr-adult-gp", type: "adult_clinic", title: "GP checkup — Parent A",
+        nextDue: isoDate(addDays(today, 16)), cadenceDays: 365, leadDays: 14, module: "homeops",
+        accountLinks: [],
+        meta: { apptId: "aa1" },
+      },
+      {
+        id: "pr-pet", type: "pet_care", title: "Bella — flea treatment",
+        nextDue: isoDate(addDays(today, 8)), cadenceDays: 30, leadDays: 7, module: "pets",
+        accountLinks: [{ label: "Vet WhatsApp", url: "https://wa.me/27510009999" }],
+        meta: { petId: "pet1" },
+      },
     ];
   }
 
@@ -293,6 +680,11 @@
         data.processes = seedProcesses(startOfDay(new Date()));
       }
       if (!Array.isArray(data.history)) data.history = [];
+      if (!data.profile) data.profile = { onboarded: false, city: "", purpose: "", updatedAt: null };
+      ["retirement","insurance","kids","kidFees","kidEvents","maintenance","adultAppts","pets","schoolCalendar"].forEach(function (k) {
+        if (!Array.isArray(data[k])) data[k] = (seed()[k]) || [];
+      });
+      if (!data.groceries) data.groceries = seed().groceries;
       return data;
     } catch {
       return seed();
@@ -629,6 +1021,11 @@
 
   function renderMore() {
     const items = [
+      { id: "kids", mod: "kids", icon: "🎒", title: "Kids", meta: "School · activities · clinic" },
+      { id: "insurance", mod: "insurance", icon: "🛡", title: "Insurance", meta: "Medical · life · car · gap" },
+      { id: "retire", mod: "retire", icon: "📈", title: "Retirement", meta: "RA · pension · TFSA reminders" },
+      { id: "homeops", mod: "homeops", icon: "🏠", title: "Home ops", meta: "Groceries · repairs · pets" },
+      { id: "science", mod: "science", icon: "🔬", title: "Science Desk", meta: "Weekly tips · methods" },
       { id: "tax", mod: "tax", icon: "📋", title: "Tax", meta: "Deadlines · prep packs" },
       { id: "household", mod: "household", icon: "👥", title: "Household", meta: "Workers · payroll Approve" },
       { id: "docs", mod: "docs", icon: "📄", title: "Docs", meta: "Vault · expiry watch" },
@@ -742,6 +1139,20 @@
   }
 
   function renderSettings() {
+    const settingsView = document.getElementById("view-settings");
+    if (settingsView && !document.getElementById("profile-card")) {
+      const card = document.createElement("div");
+      card.className = "card mb-12";
+      card.id = "profile-card";
+      card.innerHTML = '<div class="card-head"><h3>Location &amp; purpose</h3><span class="badge teal">adapt</span></div><p id="profile-summary" style="font-size:15px;color:var(--text-dim);margin-bottom:10px"></p><button type="button" class="btn btn-ghost btn-block" id="btn-redo-onboard">Change city / purpose</button>';
+      const first = settingsView.querySelector(".card");
+      if (first) settingsView.insertBefore(card, first);
+      else settingsView.insertBefore(card, settingsView.firstChild);
+      document.getElementById("btn-redo-onboard").addEventListener("click", function () { state.profile.onboarded = false; save(); showOnboarding(); });
+    }
+    const ps = document.getElementById("profile-summary");
+    if (ps && state.profile) ps.textContent = (state.profile.city || "—") + " · " + (state.profile.purpose || "—");
+
     const defs = [
       { key: "money", title: "Money", meta: "Bills, envelopes, prepaid / municipal" },
       { key: "vehicle", title: "Vehicle", meta: "Disc, service, tyres, insurance, fuel" },
@@ -797,7 +1208,163 @@
     if (currentView === "tax") renderTax();
     if (currentView === "household") renderHousehold();
     if (currentView === "docs") renderDocs();
+    if (currentView === "retire") renderRetire();
+    if (currentView === "insurance") renderInsurance();
+    if (currentView === "kids") renderKids();
+    if (currentView === "homeops") renderHomeOps();
+    if (currentView === "science") renderScience();
     if (currentView === "settings") renderSettings();
+  }
+
+
+  
+  function renderRetire() {
+    const root = $("#retire-list");
+    if (!root) return;
+    root.innerHTML = (state.retirement || []).map((r) => {
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.retireId === r.id && p.type === "retire_contrib");
+      return '<div class="retire-card"><h4>' + esc(r.name) + '</h4><div class="meta">' + esc(r.kind) + ' · ' + (r.amount ? fmtMoney(r.amount) + "/mo" : "payslip check") + ' · due day ' + r.dueDay + '</div><p style="font-size:14px;color:var(--muted);margin-bottom:10px">' + esc(r.note || "") + '</p><div class="btn-row">' +
+        (r.portal ? '<button type="button" class="btn btn-ghost" data-open-url="' + esc(r.portal) + '">Open account</button>' : '') +
+        (pr ? '<button type="button" class="btn btn-primary" data-process="' + pr.id + '">Run contribution</button>' : '') +
+        '</div></div>';
+    }).join("") || '<div class="empty">No retirement items</div>';
+  }
+
+  function renderInsurance() {
+    const root = $("#insurance-list");
+    if (!root) return;
+    root.innerHTML = (state.insurance || []).map((pol) => {
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.insuranceId === pol.id);
+      return '<div class="policy-card"><h4>' + esc(pol.name) + '</h4><div class="meta">' + esc(pol.kind) + ' · ' + fmtMoney(pol.amount) + '/mo · due day ' + pol.dueDay +
+        (pol.renewAt ? ' · renews ' + fmtDate(pol.renewAt) : '') + '</div><div class="btn-row">' +
+        (pol.portal ? '<button type="button" class="btn btn-ghost" data-open-url="' + esc(pol.portal) + '">Open payment</button>' : '') +
+        (pr ? '<button type="button" class="btn btn-primary" data-process="' + pr.id + '">Run process</button>' : '') +
+        '</div></div>';
+    }).join("");
+  }
+
+  function renderKids() {
+    const kids = state.kids || [];
+    $("#kids-profiles").innerHTML = kids.map((k) =>
+      '<div class="kid-card"><h4>' + esc(k.name) + ' · ' + k.age + 'y</h4><div class="meta">' + esc(k.school) + '</div>' +
+      (k.activities || []).map((a) => '<span class="profile-chip">' + esc(a) + '</span>').join("") + '</div>'
+    ).join("");
+    $("#kids-fees").innerHTML = (state.kidFees || []).map((f) => {
+      const kid = kids.find((x) => x.id === f.kidId);
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.kidFeeId === f.id);
+      return '<button type="button" class="row sev-amber" ' + (pr ? 'data-process="' + pr.id + '"' : '') + '>' +
+        '<div class="row-icon">🎒</div><div class="row-body"><div class="row-title">' + esc(f.title) + '</div>' +
+        '<div class="row-meta">' + esc(kid ? kid.name : "") + ' · due day ' + f.dueDay + '</div></div>' +
+        '<div class="row-right"><div class="amount">' + fmtMoney(f.amount) + '</div></div></button>';
+    }).join("") || '<div class="empty">No fees</div>';
+    $("#kids-schedules").innerHTML = kids.map((k) =>
+      '<div style="margin-bottom:10px"><strong>' + esc(k.name) + '</strong><div style="font-size:14px;color:var(--muted)">' +
+      esc((k.activities || []).join(" · ") || "No activities") + '</div></div>'
+    ).join("");
+    $("#kids-events").innerHTML = (state.kidEvents || []).map((e) => {
+      const kid = kids.find((x) => x.id === e.kidId);
+      const d = daysUntil(e.at);
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.eventId === e.id);
+      return '<button type="button" class="row sev-' + (d <= 5 ? "red" : "teal") + '" ' + (pr ? 'data-process="' + pr.id + '"' : '') + '>' +
+        '<div class="row-icon">' + (e.kind === "clinic" ? "🩺" : e.kind === "permission" ? "✍️" : "📅") + '</div>' +
+        '<div class="row-body"><div class="row-title">' + esc(e.title) + '</div><div class="row-meta">' + esc(kid ? kid.name : "") + ' · ' + fmtDate(e.at) + '</div></div>' +
+        '<div class="row-right"><span class="badge ' + (d <= 5 ? "danger" : "ok") + '">' + (d < 0 ? "Overdue" : d + "d") + '</span></div></button>';
+    }).join("");
+  }
+
+  function renderHomeOps() {
+    const g = state.groceries || { cap: 0, spent: 0 };
+    const pct = g.cap ? Math.min(100, Math.round((g.spent / g.cap) * 100)) : 0;
+    const gPr = (state.processes || []).find((p) => p.type === "grocery_loop");
+    $("#grocery-panel").innerHTML = '<div class="env-head"><span>This month</span><span class="env-amt">' + fmtMoney(g.spent) + ' / ' + fmtMoney(g.cap) + '</span></div>' +
+      '<div class="progress"><span style="width:' + pct + '%"></span></div>' +
+      (gPr ? '<button type="button" class="btn btn-primary btn-block" style="margin-top:10px" data-process="' + gPr.id + '">Run grocery loop</button>' : '');
+    $("#maint-list").innerHTML = (state.maintenance || []).map((m) => {
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.maintId === m.id);
+      const d = daysUntil(m.nextDue);
+      return '<button type="button" class="row sev-' + (d <= 7 ? "amber" : "teal") + '" ' + (pr ? 'data-process="' + pr.id + '"' : '') + '>' +
+        '<div class="row-icon">🔧</div><div class="row-body"><div class="row-title">' + esc(m.title) + '</div><div class="row-meta">next ' + fmtDate(m.nextDue) + '</div></div></button>';
+    }).join("");
+    $("#adult-appt-list").innerHTML = (state.adultAppts || []).map((a) => {
+      const pr = (state.processes || []).find((p) => p.meta && p.meta.apptId === a.id);
+      return '<button type="button" class="row" ' + (pr ? 'data-process="' + pr.id + '"' : '') + '>' +
+        '<div class="row-icon">🏥</div><div class="row-body"><div class="row-title">' + esc(a.title) + '</div><div class="row-meta">' + esc(a.who) + ' · ' + fmtDate(a.at) + '</div></div></button>';
+    }).join("");
+    const petsCard = $("#pets-card");
+    if (petsCard) petsCard.style.display = state.modules.pets ? "" : "none";
+    $("#pets-list").innerHTML = (state.pets || []).map((pet) => {
+      const pr = (state.processes || []).find((x) => x.meta && x.meta.petId === pet.id);
+      return '<button type="button" class="row" ' + (pr ? 'data-process="' + pr.id + '"' : '') + '>' +
+        '<div class="row-icon">🐾</div><div class="row-body"><div class="row-title">' + esc(pet.name) + '</div><div class="row-meta">' + esc(pet.note) + ' · ' + fmtDate(pet.nextDue) + '</div></div></button>';
+    }).join("") || '<div class="empty">Enable Pets in Settings</div>';
+    $("#school-calendar").innerHTML = (state.schoolCalendar || []).map((s) =>
+      '<div style="display:flex;gap:10px;margin-bottom:8px"><div style="font-weight:700;min-width:70px">' + esc(s.term) + '</div><div style="font-size:14px;color:var(--muted)">' + esc(s.note) + '</div></div>'
+    ).join("");
+  }
+
+
+  
+  /* PLATFORM_BAR_2026_09_11 helpers */
+  function renderScience() {
+    const root = document.getElementById("science-tips");
+    if (!root) return;
+    root.innerHTML = SCIENCE_TIPS.map((t) =>
+      '<div class="science-tip"><h4>' + esc(t.h) + '</h4><p>' + esc(t.body) + '</p><div class="method">' + esc(t.method) + '</div></div>'
+    ).join("");
+  }
+
+  function applyPurposeModules(purpose) {
+    const preset = PURPOSE_MODULE_PRESETS[purpose];
+    if (!preset || !state.modules) return;
+    Object.keys(state.modules).forEach((k) => {
+      if (Object.prototype.hasOwnProperty.call(preset, k)) state.modules[k] = !!preset[k];
+    });
+  }
+
+  function updateBrandLocation() {
+    const sub = document.querySelector(".brand-text p");
+    if (!sub || !state.profile) return;
+    const city = state.profile.city || "";
+    const purpose = state.profile.purpose || "";
+    if (city || purpose) sub.textContent = [city, purpose].filter(Boolean).join(" · ");
+  }
+
+  function showOnboarding() {
+    const el = document.getElementById("onboard");
+    if (!el) return;
+    const city = document.getElementById("ob-city");
+    const purpose = document.getElementById("ob-purpose");
+    if (city && state.profile) city.value = state.profile.city || "Bloemfontein";
+    if (purpose && state.profile) purpose.value = state.profile.purpose || "household";
+    el.classList.add("open");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+  function hideOnboarding() {
+    const el = document.getElementById("onboard");
+    if (!el) return;
+    el.classList.remove("open");
+    el.setAttribute("aria-hidden", "true");
+  }
+
+  function completeOnboarding() {
+    const city = ((document.getElementById("ob-city") && document.getElementById("ob-city").value) || "").trim();
+    const purpose = (document.getElementById("ob-purpose") && document.getElementById("ob-purpose").value) || "";
+    if (!city) { toast("Enter your city / region"); return; }
+    if (!purpose) { toast("Choose what you run"); return; }
+    state.profile = { onboarded: true, city: city, purpose: purpose, updatedAt: new Date().toISOString() };
+    applyPurposeModules(purpose);
+    save();
+    hideOnboarding();
+    updateBrandLocation();
+    render();
+    toast("Saved · modules adapted");
+  }
+
+  function maybeOnboard() {
+    if (!state.profile) state.profile = { onboarded: false, city: "", purpose: "", updatedAt: null };
+    if (!state.profile.onboarded) showOnboarding();
+    else updateBrandLocation();
   }
 
 
@@ -870,7 +1437,7 @@
 
   function isMoneyPayProcess(proc) {
     const def = PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom;
-    return !!def.moneyProcess || proc.type === "pay_bill" || proc.type === "prepaid_topup";
+    return !!def.moneyProcess || ["pay_bill","prepaid_topup","retire_contrib","insurance_premium","school_fee","grocery_loop"].includes(proc.type);
   }
 
   function renderProcessRunner() {
@@ -1345,6 +1912,8 @@
       }
       return;
     }
+    const openUrl = e.target.closest("[data-open-url]");
+    if (openUrl) { window.open(openUrl.getAttribute("data-open-url"), "_blank", "noopener,noreferrer"); return; }
     const modToggle = e.target.closest("[data-mod-toggle]");
     if (modToggle) {
       state.modules[modToggle.dataset.modToggle] = !!modToggle.checked;
@@ -1364,7 +1933,7 @@
       `<p><strong>Life Desk</strong> is a mobile-first demo of a South African household life-management autopilot (L3–L4).</p>
        <p>Tap a due bill → Open payment (exact stored URL) → confirm paid → next due auto from cadence. You only <strong>Approve</strong> money / legal / government steps.</p>
        <p>Sample data: Prinsloo household, Bloemfontein. Toggle modules in Settings.</p>
-       <p style="font-size:12px;color:var(--muted)">Not tax, legal, labour or financial advice. Does not file with SARS or uFiling. Demo / localStorage only.</p>`
+       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour or medical advice. Does not file with SARS or uFiling. Demo / localStorage only.</p>`
     );
   });
   $("#modal-close").addEventListener("click", closeModal);
@@ -1455,8 +2024,10 @@
   $("#pr-close").addEventListener("click", closeProcessRunner);
   $("#btn-add-process")?.addEventListener("click", () => openAddProcessModal());
   $("#btn-add-process-today")?.addEventListener("click", () => openAddProcessModal());
+  document.getElementById("ob-save") && document.getElementById("ob-save").addEventListener("click", completeOnboarding);
 
   /* boot */
   save();
+  maybeOnboard();
   render();
 })();

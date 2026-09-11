@@ -69,3 +69,6 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 ## Disclaimer
 
 Demo / sample data only. Not tax, legal, labour, or financial advice. Life Desk does **not** file with SARS, submit uFiling, move money, or act as your attorney. Confirm real-world compliance with qualified professionals and official channels.
+
+## Update 2026-09-11
+Platform bar 2026-09-11: Science Desk, elderly UI (18px+), location+purpose onboarding, household-with-kids (retirement, insurance hub, kids, home ops). Not financial/insurance/tax/medical advice.

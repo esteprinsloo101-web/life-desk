@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1220" />
-  <meta name="description" content="Life Desk — SA household guided processes (bills, disc, tax, payroll). Sample data only. Not tax, legal or financial advice." />
+  <meta name="description" content="Life Desk — SA household autopilot with kids, insurance, retirement reminders. Not financial, insurance, tax or medical advice." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Life Desk · Household Autopilot</title>
@@ -249,6 +249,109 @@
         </div>
         <p class="disclaimer">Flags saved in localStorage · Turning a module off hides it from nav and Today queue · Not tax/legal advice.</p>
       </section>
+    
+      
+      <section class="view" id="view-retire" data-view="retire">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Retirement &amp; savings</h2>
+            <p class="sub">RA · pension · TFSA-style reminders</p>
+          </div>
+        </div>
+        <div id="retire-list"></div>
+        <p class="disclaimer">Not financial advice · Life Desk does not invest or move money · Confirm products with a licensed adviser.</p>
+      </section>
+
+      <section class="view" id="view-insurance" data-view="insurance">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Insurance hub</h2>
+            <p class="sub">Medical · life · funeral · contents · car · gap</p>
+          </div>
+        </div>
+        <div id="insurance-list"></div>
+        <p class="disclaimer">Not insurance advice · Premiums and cover are your broker/insurer's domain · Demo sample policies only.</p>
+      </section>
+
+      <section class="view" id="view-kids" data-view="kids">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Kids</h2>
+            <p class="sub">School · activities · clinic · slips</p>
+          </div>
+        </div>
+        <div id="kids-profiles"></div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>School &amp; activity dues</h3><span class="badge warn">fees</span></div>
+          <div class="list" id="kids-fees"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Schedules</h3><span class="badge teal">week</span></div>
+          <div id="kids-schedules"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Clinic &amp; events</h3></div>
+          <div class="list" id="kids-events"></div>
+        </div>
+        <p class="disclaimer">Not medical advice · School fee amounts are demo · Confirm with school / clinic yourself.</p>
+      </section>
+
+      <section class="view" id="view-homeops" data-view="homeops">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Home ops</h2>
+            <p class="sub">Groceries · repairs · adult clinic · pets</p>
+          </div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Groceries budget</h3><span class="badge teal">loop</span></div>
+          <div id="grocery-panel"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Home maintenance</h3></div>
+          <div class="list" id="maint-list"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Adult appointments</h3></div>
+          <div class="list" id="adult-appt-list"></div>
+        </div>
+        <div class="card mb-12" id="pets-card">
+          <div class="card-head"><h3>Pet care</h3><span class="badge muted">toggle</span></div>
+          <div class="list" id="pets-list"></div>
+        </div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>School calendar</h3></div>
+          <div id="school-calendar"></div>
+        </div>
+        <p class="disclaimer">Not medical or veterinary advice · Demo household ops only.</p>
+      </section>
+
+      <section class="view" id="view-science" data-view="science">
+        <button type="button" class="back-link" data-nav="more">← More</button>
+        <div class="view-title">
+          <div>
+            <h2>Science Desk</h2>
+            <p class="sub">Weekly improve tips for household routines — evidence + checklists, not magic advice.</p>
+          </div>
+          <span class="badge teal">weekly</span>
+        </div>
+        <div class="science-banner">
+          <h3>Science Desk · Home ops</h3>
+          <p>Improve this week with small, honest experiments. Methods and limits shown on every tip.</p>
+        </div>
+        <div id="science-tips"></div>
+        <div class="card mb-12">
+          <div class="card-head"><h3>Coming: coach experiments</h3><span class="badge muted">R89-class</span></div>
+          <p style="font-size:15px;color:var(--text-dim);margin-bottom:10px">Guided weekly experiments for home ops (bundled later). AEGIS already has Paystack Science Desk for flood screening.</p>
+          <a class="btn btn-ghost btn-block" href="https://esteprinsloo101-web.github.io/aegis-floodwatch/desk.html" target="_blank" rel="noopener">See AEGIS Science Desk (flood)</a>
+        </div>
+        <p class="disclaimer">Not financial, insurance, tax, labour, or medical advice. Life Desk does not file with SARS, move money, or replace a broker/doctor.</p>
+      </section>
+
     </main>
 
     <nav class="nav" id="bottom-nav" aria-label="Primary">
@@ -271,6 +374,33 @@
 
   
   <!-- ProcessRunner wizard -->
+  
+  <div class="onboard-overlay" id="onboard" aria-hidden="true">
+    <div class="onboard-sheet" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
+      <h2 id="onboard-title">Where &amp; what you run</h2>
+      <p class="lead">Life Desk: city/region + purpose so we show the right modules. You can change this later in Settings.</p>
+      <div class="form-row">
+        <label for="ob-city">City / region</label>
+        <input type="text" id="ob-city" placeholder="e.g. Bloemfontein, Free State" autocomplete="address-level2" />
+      </div>
+      <div class="form-row">
+        <label for="ob-purpose">What I run</label>
+        <select id="ob-purpose">
+          <option value="">Choose…</option>
+          <option value="household">Household / family</option>
+          <option value="farm">Farm / smallholding</option>
+          <option value="trade">Trade / job work</option>
+          <option value="rentals">Rentals / units</option>
+          <option value="stokvel">Stokvel / society money</option>
+          <option value="flood">Flood / hazard screen</option>
+          <option value="decisions">Decisions / judgment</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="ob-save">Save &amp; continue</button>
+      <p class="disclaimer" style="margin-top:12px">Stored on this device only · Not advice</p>
+    </div>
+  </div>
+
   <div class="pr-overlay" id="process-runner" aria-hidden="true">
     <div class="pr-sheet" role="dialog" aria-modal="true" aria-labelledby="pr-title">
       <div class="pr-head">
