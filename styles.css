@@ -862,3 +862,11 @@ body {
 .reminder-item .r-src.quiet {
   color: var(--warn, #fbbf24);
 }
+
+button.reminder-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+}
