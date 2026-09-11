@@ -1229,7 +1229,7 @@
       { id: "tax", mod: "tax", icon: "📋", title: "Tax", meta: "Deadlines · prep packs" },
       { id: "household", mod: "household", icon: "👥", title: "Household", meta: "Workers · payroll Approve" },
       { id: "docs", mod: "docs", icon: "📄", title: "Docs", meta: "Vault · expiry watch" },
-      { id: "settings", mod: null, icon: "⚙", title: "Settings", meta: "Module toggles" },
+      { id: "settings", mod: null, icon: "⚙", title: "Settings", meta: "Modules · reminders · backup" },
     ];
     $("#more-grid").innerHTML = items
       .filter((i) => !i.mod || state.modules[i.mod])
@@ -2158,8 +2158,8 @@
       "About Life Desk",
       `<p><strong>Life Desk</strong> is a mobile-first demo of a South African household life-management autopilot (L3–L4).</p>
        <p>Tap a due bill → Open payment (exact stored URL) → confirm paid → next due auto from cadence. You only <strong>Approve</strong> money / legal / government steps.</p>
-       <p>Sample data: Prinsloo household, Bloemfontein. Toggle modules in Settings.</p>
-       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour, legal or medical advice. Does not file with SARS or uFiling. No mining, chemistry or environmental advisory. Demo / localStorage only. Installable PWA · export your JSON backup from Settings.</p>`
+       <p>Sample data on this demo: Prinsloo household, Bloemfontein. Toggle modules, reminders, and JSON backup in Settings.</p>
+       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour, legal or medical advice. Does not file with SARS or uFiling. No mining, chemistry or environmental advisory. Demo / localStorage only. Installable PWA · export/import JSON from Settings. Reminders need the app open (no background sync).</p>`
     );
   });
   $("#modal-close").addEventListener("click", closeModal);
@@ -2313,6 +2313,11 @@
     reader.onload = function () {
       try {
         const data = JSON.parse(String(reader.result || ""));
+        if (!data || typeof data !== "object") throw new Error("Invalid file");
+        if (!confirm("Replace all Life Desk data on this device with this backup? This cannot be undone.")) {
+          toast("Import cancelled");
+          return;
+        }
         applyImportPayload(data);
       } catch (err) {
         toast("Import failed — check JSON");
