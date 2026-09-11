@@ -46,12 +46,12 @@ Files: `index.html` · `styles.css` · `app.js` · `README.md`
 
 ## Guided processes (not checklists)
 
-Clicking a due item opens a **ProcessRunner** wizard: Start → steps (with optional **Open account** deep links) → Done → confirm **next due** from cadence. The item returns to Today when the next due approaches. Add/edit processes and account links in **Settings**.
+Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (exact stored https URL via `window.open`) → **Confirm paid** (amount optional) → **Done** with **next due auto-filled from cadence** (override optional). Item leaves Today until the lead window. Prepaid top-ups use the same pattern. Add/edit processes and payment URLs in **Settings**.
 
 ## How to try
 
-1. **Today** — tap a due process → run the wizard → confirm next due; check history.
-2. **Money** — mark a bill paid (persists).
+1. **Today** / **Money** — tap an outstanding bill → **Open payment** → confirm paid → next due auto from cadence; check history.
+2. **Money** — bills and prepaid open the same payment wizard (persists).
 3. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
 4. **More → Tax / Household / Docs** — prep packs, Approve payroll, vault.
 5. **More → Settings** — turn off Household (or any module); Today and nav adapt.

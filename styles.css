@@ -686,3 +686,42 @@ ul, ol { list-style: none; }
   color: var(--accent-bright, #2dd4bf);
   margin-top: 4px;
 }
+
+.pr-pay-card {
+  border-color: rgba(45, 212, 191, 0.45);
+  background: linear-gradient(180deg, rgba(20, 184, 166, 0.08), transparent);
+}
+.pr-pay-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 16px 14px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: #042f2e;
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.25);
+}
+.pr-pay-btn:active { opacity: 0.9; transform: translateY(1px); }
+.pr-pay-btn-label { font-size: 17px; letter-spacing: 0.01em; }
+.pr-pay-btn-sub { font-size: 12px; font-weight: 650; opacity: 0.85; }
+.pr-pay-url {
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+  margin-bottom: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.pr-next-auto .pr-next-date {
+  font-size: 22px;
+  font-weight: 750;
+  color: var(--accent-bright, #2dd4bf);
+  margin: 4px 0;
+}
+.row.btn-like { cursor: pointer; }

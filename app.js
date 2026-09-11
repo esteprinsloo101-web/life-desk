@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "life-desk-v2";
+  const STORAGE_KEY = "life-desk-v3";
   const TZ = "Africa/Johannesburg";
 
   /* ── Process types (guided wizards, not checklists) ── */
@@ -14,11 +14,12 @@
       icon: "R",
       defaultCadenceDays: 30,
       leadDays: 7,
-      disclaimer: "Not financial advice. You pay — Life Desk only guides.",
+      moneyProcess: true,
+      disclaimer: "Not financial advice. You pay — Life Desk only guides. Links open the stored payment URL; app does not move money.",
       steps: [
         { key: "review", title: "Review bill", body: "Confirm payee, amount and due date. Check your statement if unsure." },
-        { key: "account", title: "Open account / pay", body: "Use the account link below (bank app, municipal portal, or debit order note). Complete payment yourself." },
-        { key: "confirm", title: "Confirm paid", body: "Tick when the payment is done on your side.", checks: ["I paid / authorised this bill"] },
+        { key: "pay", title: "Open payment", body: "Open the exact payment URL for this account (municipal portal, DStv, bank pay-beneficiary, etc.). Complete payment yourself in the new tab, then return here.", openPay: true },
+        { key: "confirm", title: "Confirm paid", body: "After you return from the payment site, confirm you paid. Amount is optional.", checks: ["I paid / authorised this bill"], amountOptional: true },
       ],
     },
     renew_disc: {
@@ -62,11 +63,12 @@
       icon: "⚡",
       defaultCadenceDays: 18,
       leadDays: 5,
-      disclaimer: "Confirm municipal amounts on your metro statement.",
+      moneyProcess: true,
+      disclaimer: "Confirm municipal amounts on your metro statement. You top up — Life Desk only guides.",
       steps: [
         { key: "check", title: "Check balance", body: "Note meter / account balance before top-up." },
-        { key: "topup", title: "Top up", body: "Use vendor, bank app or municipal portal." },
-        { key: "confirm", title: "Log top-up", body: "Confirm top-up done.", checks: ["Top-up completed"] },
+        { key: "pay", title: "Open top-up / payment", body: "Open the stored payment URL (bank prepaid, vendor, or municipal portal). Complete the top-up yourself, then return here.", openPay: true },
+        { key: "confirm", title: "Confirm top-up", body: "After you return, confirm the top-up. Amount is optional.", checks: ["Top-up completed"], amountOptional: true },
       ],
     },
     custom: {
@@ -100,12 +102,12 @@
         city: "Bloemfontein",
       },
       bills: [
-        { id: "b1", name: "Mangaung rates & taxes", category: "Municipal", amount: 1850, dueDay: 7, status: "due", accountRef: "MM-44291" },
-        { id: "b2", name: "Fibre (Openserve)", category: "Utilities", amount: 799, dueDay: 1, status: "paid", accountRef: "FB-1882" },
-        { id: "b3", name: "School fees — Term", category: "School", amount: 4200, dueDay: 15, status: "due", accountRef: "SF-09" },
-        { id: "b4", name: "Car insurance — OUTsurance", category: "Insurance", amount: 1120, dueDay: 3, status: "paid", accountRef: "POL-7741" },
-        { id: "b5", name: "DSTV Compact", category: "Media", amount: 689, dueDay: 20, status: "due", accountRef: "DSTV" },
-        { id: "b6", name: "Medical aid — Discovery", category: "Health", amount: 3850, dueDay: 1, status: "paid", accountRef: "MA-220" },
+        { id: "b1", name: "Mangaung rates & taxes", category: "Municipal", amount: 1850, dueDay: 7, status: "due", accountRef: "MM-44291", paymentUrl: "https://www.mangaung.co.za/residents/municipal-account/pay/" },
+        { id: "b2", name: "Fibre (Openserve)", category: "Utilities", amount: 799, dueDay: 1, status: "paid", accountRef: "FB-1882", paymentUrl: "https://www.openserve.co.za/account/pay-bill/" },
+        { id: "b3", name: "School fees — Term", category: "School", amount: 4200, dueDay: 15, status: "due", accountRef: "SF-09", paymentUrl: "https://www.payfast.co.za/eng/process?demo=school-fees-SF-09" },
+        { id: "b4", name: "Car insurance — OUTsurance", category: "Insurance", amount: 1120, dueDay: 3, status: "paid", accountRef: "POL-7741", paymentUrl: "https://www.outsurance.co.za/my-policy/make-a-payment/" },
+        { id: "b5", name: "DSTV Compact", category: "Media", amount: 689, dueDay: 20, status: "due", accountRef: "DSTV", paymentUrl: "https://www.dstv.co.za/my-dstv/pay-my-account/" },
+        { id: "b6", name: "Medical aid — Discovery", category: "Health", amount: 3850, dueDay: 1, status: "paid", accountRef: "MA-220", paymentUrl: "https://www.discovery.co.za/medical-aid/pay-contribution/" },
       ],
       envelopes: [
         { id: "e1", name: "Fixed bills", cap: 14000, spent: 9758 },
@@ -114,8 +116,8 @@
         { id: "e4", name: "Buffer / emergency", cap: 3000, spent: 0 },
       ],
       prepaid: [
-        { id: "p1", type: "Electricity (prepaid)", lastTopUpDaysAgo: 12, cadenceDays: 18, note: "Top-up ~every 2–3 weeks" },
-        { id: "p2", type: "Water — municipal", lastTopUpDaysAgo: 0, cadenceDays: 30, note: "Monthly statement" },
+        { id: "p1", type: "Electricity (prepaid)", lastTopUpDaysAgo: 12, cadenceDays: 18, note: "Top-up ~every 2–3 weeks", paymentUrl: "https://www.fnb.co.za/pay/buy-prepaid-electricity/" },
+        { id: "p2", type: "Water — municipal", lastTopUpDaysAgo: 0, cadenceDays: 30, note: "Monthly statement", paymentUrl: "https://www.mangaung.co.za/residents/municipal-account/pay/" },
       ],
       vehicle: {
         reg: "FS 12 GP GP",
@@ -167,26 +169,32 @@
       {
         id: "pr-b1", type: "pay_bill", title: "Pay Mangaung rates & taxes",
         nextDue: billDue(7), cadenceDays: 30, leadDays: 7, module: "money",
-        accountLinks: [{ label: "Mangaung portal", url: "https://www.mangaung.co.za/" }],
+        accountLinks: [{ label: "Mangaung pay account", url: "https://www.mangaung.co.za/residents/municipal-account/pay/" }],
         meta: { amount: 1850, billId: "b1", accountRef: "MM-44291" },
       },
       {
         id: "pr-b3", type: "pay_bill", title: "Pay school fees — Term",
         nextDue: billDue(15), cadenceDays: 30, leadDays: 7, module: "money",
-        accountLinks: [{ label: "School fees note", url: "https://www.gov.za/" }],
+        accountLinks: [{ label: "School fees pay link", url: "https://www.payfast.co.za/eng/process?demo=school-fees-SF-09" }],
         meta: { amount: 4200, billId: "b3", accountRef: "SF-09" },
       },
       {
         id: "pr-b5", type: "pay_bill", title: "Pay DSTV Compact",
         nextDue: billDue(20), cadenceDays: 30, leadDays: 5, module: "money",
-        accountLinks: [{ label: "DStv account", url: "https://www.dstv.co.za/" }],
+        accountLinks: [{ label: "DStv pay my account", url: "https://www.dstv.co.za/my-dstv/pay-my-account/" }],
         meta: { amount: 689, billId: "b5", accountRef: "DSTV" },
       },
       {
         id: "pr-pre1", type: "prepaid_topup", title: "Electricity (prepaid) top-up",
         nextDue: isoDate(addDays(today, 6)), cadenceDays: 18, leadDays: 5, module: "money",
-        accountLinks: [{ label: "Prepaid vendor / bank", url: "https://www.fnb.co.za/" }],
+        accountLinks: [{ label: "FNB buy prepaid electricity", url: "https://www.fnb.co.za/pay/buy-prepaid-electricity/" }],
         meta: { prepaidId: "p1" },
+      },
+      {
+        id: "pr-pre2", type: "prepaid_topup", title: "Water — municipal top-up",
+        nextDue: isoDate(addDays(today, 25)), cadenceDays: 30, leadDays: 5, module: "money",
+        accountLinks: [{ label: "Mangaung municipal pay", url: "https://www.mangaung.co.za/residents/municipal-account/pay/" }],
+        meta: { prepaidId: "p2" },
       },
       {
         id: "pr-disc", type: "renew_disc", title: "Licence disc renewal",
@@ -532,37 +540,49 @@
       .join("");
 
     $("#bills-list").innerHTML = state.bills
-      .map(
-        (b) => `
-      <div class="row ${b.status === "paid" ? "paid" : "sev-amber"}" data-bill="${b.id}">
+      .map((b) => {
+        const proc = (state.processes || []).find((p) => p.type === "pay_bill" && p.meta && p.meta.billId === b.id);
+        const unpaid = b.status !== "paid";
+        const rowAttrs = unpaid && proc
+          ? `data-process="${proc.id}" role="button"`
+          : `data-bill="${b.id}"`;
+        return `
+      <div class="row ${b.status === "paid" ? "paid" : "sev-amber"} ${unpaid && proc ? "btn-like" : ""}" ${rowAttrs}>
         <div class="row-icon">R</div>
         <div class="row-body">
           <div class="row-title">${esc(b.name)}</div>
-          <div class="row-meta">${esc(b.category)} · due day ${b.dueDay} · ${esc(b.accountRef)}</div>
+          <div class="row-meta">${esc(b.category)} · due day ${b.dueDay} · ${esc(b.accountRef)}${b.paymentUrl ? " · pay link" : ""}</div>
         </div>
         <div class="row-right">
           <div class="amount">${fmtMoney(b.amount)}</div>
           ${
             b.status === "paid"
               ? '<span class="badge ok">Paid</span>'
-              : `<button type="button" class="btn btn-primary btn-sm" data-pay="${b.id}">Mark paid</button>`
+              : proc
+                ? `<button type="button" class="btn btn-primary btn-sm" data-process="${proc.id}">Pay →</button>`
+                : `<button type="button" class="btn btn-primary btn-sm" data-pay="${b.id}">Mark paid</button>`
           }
         </div>
-      </div>`
-      )
+      </div>`;
+      })
       .join("");
 
     $("#prepaid-list").innerHTML = state.prepaid
       .map((p) => {
         const left = p.cadenceDays - p.lastTopUpDaysAgo;
+        const proc = (state.processes || []).find((x) => x.type === "prepaid_topup" && x.meta && x.meta.prepaidId === p.id);
+        const rowAttrs = proc ? `data-process="${proc.id}" role="button"` : "";
         return `
-        <div class="row sev-${left <= 0 ? "red" : left <= 5 ? "amber" : "teal"}">
+        <div class="row sev-${left <= 0 ? "red" : left <= 5 ? "amber" : "teal"} ${proc ? "btn-like" : ""}" ${rowAttrs}>
           <div class="row-icon">⚡</div>
           <div class="row-body">
             <div class="row-title">${esc(p.type)}</div>
-            <div class="row-meta">${esc(p.note)} · last top-up ${p.lastTopUpDaysAgo}d ago</div>
+            <div class="row-meta">${esc(p.note)} · last top-up ${p.lastTopUpDaysAgo}d ago${p.paymentUrl ? " · pay link" : ""}</div>
           </div>
-          <div class="row-right"><span class="badge ${left <= 0 ? "danger" : left <= 5 ? "warn" : "teal"}">${left <= 0 ? "Now" : "~" + left + "d"}</span></div>
+          <div class="row-right">
+            ${proc ? `<button type="button" class="btn btn-primary btn-sm" data-process="${proc.id}">Top up →</button>` : ""}
+            <span class="badge ${left <= 0 ? "danger" : left <= 5 ? "warn" : "teal"}">${left <= 0 ? "Now" : "~" + left + "d"}</span>
+          </div>
         </div>`;
       })
       .join("");
@@ -791,7 +811,8 @@
   function prPhases(proc) {
     const def = PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom;
     const steps = def.steps || [];
-    return ["start", ...steps.map((_, i) => "step:" + i), "done", "nextdue"];
+    // start → steps → done (next due auto from cadence on done; optional override)
+    return ["start", ...steps.map((_, i) => "step:" + i), "done"];
   }
 
   function openProcessRunner(processId) {
@@ -800,7 +821,7 @@
       toast("Process not found");
       return;
     }
-    prState = { processId, phaseIndex: 0, answers: {}, checks: {} };
+    prState = { processId, phaseIndex: 0, answers: {}, checks: {}, openedPay: false, showDueOverride: false };
     $("#process-runner").classList.add("open");
     $("#process-runner").setAttribute("aria-hidden", "false");
     renderProcessRunner();
@@ -814,7 +835,42 @@
 
   function suggestNextDue(proc) {
     const days = Number(proc.cadenceDays) || (PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom).defaultCadenceDays || 30;
-    return isoDate(addDays(new Date(), days));
+    // From today + cadence (monthly/weekly/custom days) — user does not invent a date
+    return isoDate(addDays(startOfDay(new Date()), days));
+  }
+
+  function cadenceLabel(days) {
+    const n = Number(days) || 30;
+    if (n === 7) return "weekly";
+    if (n === 14) return "every 2 weeks";
+    if (n === 30 || n === 31) return "monthly";
+    if (n === 365) return "yearly";
+    return "every " + n + " days";
+  }
+
+  function resolvePaymentLinks(proc) {
+    const links = [];
+    const seen = new Set();
+    const push = (label, url) => {
+      if (!url || url === "#" || seen.has(url)) return;
+      seen.add(url);
+      links.push({ label: label || "Open payment", url });
+    };
+    (proc.accountLinks || []).forEach((a) => push(a.label, a.url));
+    if (proc.meta && proc.meta.billId) {
+      const bill = state.bills.find((b) => b.id === proc.meta.billId);
+      if (bill && bill.paymentUrl) push(bill.name + " · pay", bill.paymentUrl);
+    }
+    if (proc.meta && proc.meta.prepaidId) {
+      const p = state.prepaid.find((x) => x.id === proc.meta.prepaidId);
+      if (p && p.paymentUrl) push(p.type + " · top-up", p.paymentUrl);
+    }
+    return links;
+  }
+
+  function isMoneyPayProcess(proc) {
+    const def = PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom;
+    return !!def.moneyProcess || proc.type === "pay_bill" || proc.type === "prepaid_topup";
   }
 
   function renderProcessRunner() {
@@ -842,13 +898,17 @@
       html = `
         <div class="pr-phase-label">Start</div>
         <div class="pr-title">${esc(proc.title)}</div>
-        <div class="pr-meta">${esc(def.label)} · due ${fmtDate(proc.nextDue)} · cadence every ${proc.cadenceDays} days</div>
+        <div class="pr-meta">${esc(def.label)} · due ${fmtDate(proc.nextDue)} · ${esc(cadenceLabel(proc.cadenceDays))}</div>
         <div class="pr-card">
           <h4>What happens</h4>
-          <p>This is a guided process (${def.steps.length} steps). On complete you confirm the next due date — the item returns to Today when that date approaches.</p>
+          <p>${
+            isMoneyPayProcess(proc)
+              ? "Open the payment URL → pay yourself → confirm paid → next due is set automatically from cadence. Item leaves Today until the lead window."
+              : "Guided process (" + def.steps.length + " steps). On complete, next due is set automatically from cadence — the item returns to Today when that date approaches."
+          }</p>
           <p style="margin-top:8px;font-size:12px;color:var(--muted)">${esc(def.disclaimer || "")}</p>
         </div>
-        ${renderAccountLinks(proc)}
+        ${renderPayLinks(proc, { prominent: isMoneyPayProcess(proc) })}
         ${proc.meta && proc.meta.amount ? `<div class="pr-card"><h4>Amount</h4><p>${fmtMoney(proc.meta.amount)}${proc.meta.accountRef ? " · ref " + esc(proc.meta.accountRef) : ""}</p></div>` : ""}
       `;
       act = `
@@ -858,11 +918,19 @@
     } else if (phase.startsWith("step:")) {
       const si = Number(phase.split(":")[1]);
       const step = def.steps[si];
+      const showPay = step.openPay || step.key === "pay" || step.key === "account" || step.key === "topup" || step.key === "efiling" || step.key === "visit" || step.key === "approve";
       html = `
         <div class="pr-phase-label">Step ${si + 1} of ${def.steps.length}</div>
         <div class="pr-title">${esc(step.title)}</div>
         <div class="pr-meta">${esc(step.body)}</div>
-        ${si === 1 || step.key === "account" || step.key === "efiling" || step.key === "visit" || step.key === "topup" || step.key === "approve" ? renderAccountLinks(proc) : ""}
+        ${showPay ? renderPayLinks(proc, { prominent: !!step.openPay || isMoneyPayProcess(proc) }) : ""}
+        ${
+          step.amountOptional
+            ? `<div class="form-row"><label>Amount paid (optional)</label>
+                <input type="number" id="pr-amount" min="0" step="0.01" placeholder="${proc.meta && proc.meta.amount ? proc.meta.amount : "e.g. 689"}" value="${esc(prState.answers.amountPaid || "")}" />
+              </div>`
+            : ""
+        }
         ${
           step.checks
             ? `<div class="pr-card">${step.checks
@@ -885,42 +953,40 @@
         <button type="button" class="btn btn-primary" id="pr-next">Continue →</button>
       `;
     } else if (phase === "done") {
+      const suggested = prState.suggestedNext || suggestNextDue(proc);
+      prState.suggestedNext = suggested;
+      const override = prState.showDueOverride;
       html = `
         <div class="pr-done-hero">
           <div class="big">✓</div>
-          <h4>Marked done</h4>
+          <h4>${isMoneyPayProcess(proc) ? "Paid · closing cycle" : "Marked done"}</h4>
           <p class="pr-meta">Nice — ${esc(proc.title)} is complete for this cycle.</p>
         </div>
-        <div class="pr-card">
-          <h4>Next</h4>
-          <p>Set the next expiry / due date so this process returns to Today automatically.</p>
+        <div class="pr-card pr-next-auto">
+          <h4>Next due (automatic)</h4>
+          <p class="pr-next-date">${fmtDate(suggested)}</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:4px">From cadence · ${esc(cadenceLabel(proc.cadenceDays))} (${proc.cadenceDays} days). No need to invent a date.</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:6px">Returns to Today within lead window (${proc.leadDays != null ? proc.leadDays : def.leadDays} days before due).</p>
         </div>
-      `;
-      act = `
-        <button type="button" class="btn btn-ghost" id="pr-back">Back</button>
-        <button type="button" class="btn btn-primary" id="pr-next">Set next due →</button>
-      `;
-    } else if (phase === "nextdue") {
-      const suggested = prState.suggestedNext || suggestNextDue(proc);
-      prState.suggestedNext = suggested;
-      html = `
-        <div class="pr-phase-label">Next due</div>
-        <div class="pr-title">When should this return?</div>
-        <div class="pr-meta">Suggested from cadence (every ${proc.cadenceDays} days). Confirm or adjust.</div>
-        <div class="form-row"><label>Next due date</label>
-          <input type="date" id="pr-next-due" value="${suggested}" />
-        </div>
-        <div class="form-row"><label>Cadence (days)</label>
-          <input type="number" id="pr-cadence" value="${proc.cadenceDays}" min="1" />
-        </div>
+        <button type="button" class="btn btn-ghost btn-block" id="pr-toggle-override" style="margin-bottom:10px">${override ? "Hide date override" : "Override date (optional)"}</button>
+        ${
+          override
+            ? `<div class="form-row"><label>Next due date</label>
+                <input type="date" id="pr-next-due" value="${suggested}" />
+              </div>
+              <div class="form-row"><label>Cadence (days)</label>
+                <input type="number" id="pr-cadence" value="${proc.cadenceDays}" min="1" />
+              </div>`
+            : `<input type="hidden" id="pr-next-due" value="${suggested}" />
+               <input type="hidden" id="pr-cadence" value="${proc.cadenceDays}" />`
+        }
         <div class="form-row"><label>Note (optional)</label>
-          <input type="text" id="pr-final-note" placeholder="e.g. Paid via FNB" value="${esc(prState.answers.note || "")}" />
+          <input type="text" id="pr-final-note" placeholder="${isMoneyPayProcess(proc) ? "e.g. Paid via FNB" : "Optional note"}" value="${esc(prState.answers.note || "")}" />
         </div>
-        <div class="pr-card"><p style="font-size:12px;color:var(--muted)">Item reappears in Today when within its lead window (${proc.leadDays != null ? proc.leadDays : def.leadDays} days before due). Reminder panel updates automatically.</p></div>
       `;
       act = `
         <button type="button" class="btn btn-ghost" id="pr-back">Back</button>
-        <button type="button" class="btn btn-primary" id="pr-finish">Confirm &amp; close</button>
+        <button type="button" class="btn btn-primary" id="pr-finish">Done</button>
       `;
     }
 
@@ -941,6 +1007,13 @@
       renderProcessRunner();
     });
     $("#pr-finish")?.addEventListener("click", () => finishProcess(proc));
+    $("#pr-toggle-override")?.addEventListener("click", () => {
+      capturePrAnswers();
+      const nextEl = document.getElementById("pr-next-due");
+      if (nextEl && nextEl.value) prState.suggestedNext = nextEl.value;
+      prState.showDueOverride = !prState.showDueOverride;
+      renderProcessRunner();
+    });
     body.querySelectorAll("[data-pr-check]").forEach((el) => {
       el.addEventListener("change", () => {
         prState.checks[el.getAttribute("data-pr-check")] = el.checked;
@@ -949,26 +1022,44 @@
     body.querySelectorAll("[data-open-link]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const url = btn.getAttribute("data-open-link");
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
+        if (url) {
+          window.open(url, "_blank", "noopener,noreferrer");
+          prState.openedPay = true;
+          toast("Payment tab opened — return here to confirm");
+        }
       });
     });
   }
 
-  function renderAccountLinks(proc) {
-    const links = proc.accountLinks || [];
+  function renderPayLinks(proc, opts) {
+    opts = opts || {};
+    const links = resolvePaymentLinks(proc);
+    const prominent = !!opts.prominent;
     if (!links.length) {
-      return `<div class="pr-card"><p style="font-size:12px;color:var(--muted)">No account link yet — add one in Settings → Recurring processes.</p></div>`;
+      return `<div class="pr-card"><p style="font-size:12px;color:var(--muted)">No payment URL yet — add one in Settings → Recurring processes (account link).</p></div>`;
     }
-    return (
-      `<div class="pr-card"><h4>Account links</h4>` +
-      links
-        .map(
-          (a, i) =>
-            `<button type="button" class="pr-link-btn" data-open-link="${esc(a.url)}"><span>Open account · ${esc(a.label)}</span><span>↗</span></button>`
-        )
-        .join("") +
-      `</div>`
-    );
+    const primary = links[0];
+    const rest = links.slice(1);
+    let html = `<div class="pr-card ${prominent ? "pr-pay-card" : ""}">`;
+    if (prominent) {
+      html += `<h4>Payment link</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Exact URL stored for this account. Opens in a new tab — you pay; Life Desk does not.</p>
+        <button type="button" class="pr-pay-btn" data-open-link="${esc(primary.url)}">
+          <span class="pr-pay-btn-label">Open payment</span>
+          <span class="pr-pay-btn-sub">${esc(primary.label)} ↗</span>
+        </button>
+        <div class="pr-pay-url" title="${esc(primary.url)}">${esc(primary.url)}</div>`;
+      rest.forEach((a) => {
+        html += `<button type="button" class="pr-link-btn" data-open-link="${esc(a.url)}"><span>Also · ${esc(a.label)}</span><span>↗</span></button>`;
+      });
+    } else {
+      html += `<h4>Account / portal links</h4>`;
+      links.forEach((a) => {
+        html += `<button type="button" class="pr-link-btn" data-open-link="${esc(a.url)}"><span>Open · ${esc(a.label)}</span><span>↗</span></button>`;
+      });
+    }
+    html += `</div>`;
+    return html;
   }
 
   function validatePrStep(proc, phase, def) {
@@ -989,24 +1080,36 @@
   function capturePrAnswers() {
     const note = document.getElementById("pr-note");
     if (note) prState.answers.note = note.value.trim();
+    const amt = document.getElementById("pr-amount");
+    if (amt && amt.value !== "") prState.answers.amountPaid = amt.value.trim();
+    const finalNote = document.getElementById("pr-final-note");
+    if (finalNote) prState.answers.note = finalNote.value.trim() || prState.answers.note || "";
   }
 
   function finishProcess(proc) {
+    capturePrAnswers();
     const nextEl = document.getElementById("pr-next-due");
     const cadEl = document.getElementById("pr-cadence");
     const noteEl = document.getElementById("pr-final-note");
-    const nextDue = (nextEl && nextEl.value) || suggestNextDue(proc);
+    // Auto from cadence unless user overrode
+    const nextDue = (nextEl && nextEl.value) || prState.suggestedNext || suggestNextDue(proc);
     const cadence = Math.max(1, Number(cadEl && cadEl.value) || proc.cadenceDays);
     const note = (noteEl && noteEl.value.trim()) || prState.answers.note || "";
+    const amountPaid = prState.answers.amountPaid ? Number(prState.answers.amountPaid) : null;
 
     proc.nextDue = nextDue;
     proc.cadenceDays = cadence;
     proc.lastCompletedAt = isoDate(new Date());
 
-    // Sync underlying demo entities
     if (proc.type === "pay_bill" && proc.meta && proc.meta.billId) {
       const bill = state.bills.find((b) => b.id === proc.meta.billId);
-      if (bill) bill.status = "paid";
+      if (bill) {
+        bill.status = "paid";
+        if (amountPaid != null && !Number.isNaN(amountPaid) && amountPaid > 0) {
+          bill.amount = amountPaid;
+          proc.meta.amount = amountPaid;
+        }
+      }
     }
     if (proc.type === "renew_disc") {
       state.vehicle.discExpiry = nextDue;
@@ -1029,7 +1132,12 @@
     }
     if (proc.type === "prepaid_topup" && proc.meta && proc.meta.prepaidId) {
       const p = state.prepaid.find((x) => x.id === proc.meta.prepaidId);
-      if (p) p.lastTopUpDaysAgo = 0;
+      if (p) {
+        p.lastTopUpDaysAgo = 0;
+        if (amountPaid != null && !Number.isNaN(amountPaid) && amountPaid > 0) {
+          p.lastAmount = amountPaid;
+        }
+      }
     }
 
     state.history = state.history || [];
@@ -1040,17 +1148,17 @@
       type: proc.type,
       completedAt: isoDate(new Date()),
       nextDueSet: nextDue,
-      note,
+      note: note + (amountPaid != null && !Number.isNaN(amountPaid) ? (note ? " · " : "") + fmtMoney(amountPaid) : ""),
     });
     if (state.history.length > 50) state.history.length = 50;
 
     save();
     closeProcessRunner();
     render();
-    toast("Done · next due " + fmtDate(nextDue));
+    toast("Done · next due " + fmtDate(nextDue) + " (" + cadenceLabel(cadence) + ")");
   }
 
-  function openAddProcessModal(editId) {
+    function openAddProcessModal(editId) {
     const editing = editId ? getProcess(editId) : null;
     const types = Object.keys(PROCESS_TYPES)
       .map((k) => `<option value="${k}" ${editing && editing.type === k ? "selected" : ""}>${esc(PROCESS_TYPES[k].label)}</option>`)
@@ -1073,10 +1181,10 @@
       <div class="form-row"><label>Lead days (show in Today)</label>
         <input type="number" id="np-lead" min="0" value="${editing ? editing.leadDays : 7}" />
       </div>
-      <div class="form-row"><label>Account link label</label>
-        <input type="text" id="np-link-label" value="${editing && editing.accountLinks && editing.accountLinks[0] ? esc(editing.accountLinks[0].label) : ""}" placeholder="e.g. uFiling" />
+      <div class="form-row"><label>Payment link label</label>
+        <input type="text" id="np-link-label" value="${editing && editing.accountLinks && editing.accountLinks[0] ? esc(editing.accountLinks[0].label) : ""}" placeholder="e.g. DStv pay my account" />
       </div>
-      <div class="form-row"><label>Account link URL</label>
+      <div class="form-row"><label>Payment URL (https)</label>
         <input type="url" id="np-link-url" value="${editing && editing.accountLinks && editing.accountLinks[0] ? esc(editing.accountLinks[0].url) : ""}" placeholder="https://…" />
       </div>
       <div class="btn-row">
@@ -1084,7 +1192,7 @@
       </div>
       ${editing ? `<button type="button" class="btn btn-danger btn-block" id="np-run" style="margin-top:8px">Run wizard now</button>
                    <button type="button" class="btn btn-ghost btn-block" id="np-delete" style="margin-top:8px">Delete process</button>` : ""}
-      <p style="font-size:11px;color:var(--muted);margin-top:10px">Not tax/legal advice. Links open in a new tab — no OAuth in this demo.</p>`
+      <p style="font-size:11px;color:var(--muted);margin-top:10px">Not tax/legal advice. Payment URL opens via Open payment in the wizard (window.open). No OAuth — you pay yourself.</p>`
     );
     // Hide default close flow briefly — keep close btn
     setTimeout(() => {
@@ -1101,7 +1209,7 @@
           return;
         }
         const def = PROCESS_TYPES[type] || PROCESS_TYPES.custom;
-        const links = label && url ? [{ label, url }] : label ? [{ label, url: "#" }] : url ? [{ label: "Open account", url }] : [];
+        const links = label && url ? [{ label, url }] : label ? [{ label, url: "#" }] : url ? [{ label: "Open payment", url }] : [];
         const moduleGuess =
           type === "pay_bill" || type === "prepaid_topup"
             ? "money"
@@ -1254,7 +1362,7 @@
     openModal(
       "About Life Desk",
       `<p><strong>Life Desk</strong> is a mobile-first demo of a South African household life-management autopilot (L3–L4).</p>
-       <p>It invents a Today queue from bills, vehicle disc, tax deadlines, employer payday and doc expiry. You only <strong>Approve</strong> money / legal / government steps.</p>
+       <p>Tap a due bill → Open payment (exact stored URL) → confirm paid → next due auto from cadence. You only <strong>Approve</strong> money / legal / government steps.</p>
        <p>Sample data: Prinsloo household, Bloemfontein. Toggle modules in Settings.</p>
        <p style="font-size:12px;color:var(--muted)">Not tax, legal, labour or financial advice. Does not file with SARS or uFiling. Demo / localStorage only.</p>`
     );
