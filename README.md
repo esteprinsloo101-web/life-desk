@@ -2,9 +2,9 @@
 
 **Life Desk** is a polished, mobile-first static web demo of a South African **household life-management autopilot** (L3–L4).
 
-Sample household: **Prinsloo · Bloemfontein**. Demo / sample data only. **Not** tax, legal, labour, or financial advice.
+Sample household: **Prinsloo · Bloemfontein**. Demo / sample data only. **Not** financial, tax, insurance, labour, or legal advice. No mining, chemistry, or environmental advisory.
 
-It is a **personal family capability showcase**. Modules adapt via Settings toggles (persisted in `localStorage`).
+It is a **personal family capability showcase**. Modules adapt via Settings toggles (persisted in `localStorage`). Installable as a **PWA** (Add to Home Screen) with an offline-ish shell cache.
 
 ## Product shape
 
@@ -18,7 +18,9 @@ It is a **personal family capability showcase**. Modules adapt via Settings togg
 | **Tax** | Upcoming deadline cards + prep packs (**not** filing as you) |
 | **Household** | Workers stub + payroll **Approve** card (disable if unused) |
 | **Docs** | Simple vault list with expiry watch |
-| **Settings** | Module show/hide flags |
+| **Retirement / Insurance / Kids / Home ops** | Coverage already in demo — process-backed where due |
+| **Science Desk** | Weekly improve tips (methods + limits) |
+| **Settings** | Module show/hide · quiet hours · notifications · export/import |
 
 Shared DNA with Garage Desk and other Este apps: the app **reminds, chases, prepares, closes**; human only **Approves** money / legal / government.
 
@@ -28,11 +30,11 @@ Master function map: `/workspace/ops/research/2026-09-10-life-and-business-apps-
 
 **https://esteprinsloo101-web.github.io/life-desk/**
 
-(GitHub Pages from `main`; allow a minute after push for first deploy.)
+(GitHub Pages from `main`; allow a minute after push for deploy. Source: Settings → Pages → Deploy from branch `main` / root, or the repo’s Pages workflow if configured.)
 
 ## Open locally
 
-Plain static files. No build step.
+Plain static files. No build step. **Serve over http(s)** so the service worker and notifications can register (file:// is fine for a quick look, but PWA/SW need a server).
 
 ```bash
 # from this folder
@@ -40,9 +42,30 @@ python3 -m http.server 8765
 # then open http://127.0.0.1:8765/
 ```
 
-Or open `index.html` directly in a browser (file:// works for this demo).
+Files: `index.html` · `styles.css` · `app.js` · `manifest.webmanifest` · `service-worker.js` · `icons/` · `README.md`
 
-Files: `index.html` · `styles.css` · `app.js` · `README.md`
+## PWA (install + offline shell)
+
+1. Open the live URL or local server in Chrome / Edge / Safari.
+2. Use **Install** / **Add to Home Screen** when the banner appears (or browser menu).
+3. On iOS Safari: Share → **Add to Home Screen**.
+4. The service worker caches the shell: `index.html`, `app.js`, `styles.css`, `manifest.webmanifest` (+ icons). Offline use is **shell-only** — open the app once online first.
+
+Theme colour and manifest are linked from `index.html`.
+
+## Reminders v1
+
+- **Today → Next reminders** shows the in-app queue for due / lead-window processes (tap to run the wizard).
+- **Enable notifications** (or Settings → Request permission). If denied, the UI stays graceful — in-app queue still works.
+- **Quiet hours** (default 21:00–07:00) are stored in `localStorage` with app state; alerts are skipped during quiet hours and fire times shift outside them.
+- After you finish a process (**Done**), the next reminder is scheduled from the new **next due** (when permission is granted and the tab can run timers).
+
+## Backup (export / import)
+
+In **Settings → Backup**:
+
+1. **Export JSON** — downloads app state (`life-desk-v4` payload: processes, history, modules, prefs, household data).
+2. **Import JSON** — pick a previous export to restore (round-trip). Invalid files toast an error and leave current data alone.
 
 ## Guided processes (not checklists)
 
@@ -50,11 +73,11 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 
 ## How to try
 
-1. **Today** / **Money** — tap an outstanding bill → **Open payment** → confirm paid → next due auto from cadence; check history.
-2. **Money** — bills and prepaid open the same payment wizard (persists).
-3. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
-4. **More → Tax / Household / Docs** — prep packs, Approve payroll, vault.
-5. **More → Settings** — turn off Household (or any module); Today and nav adapt.
+1. **Today** / **Money** — tap an outstanding bill → **Open payment** → confirm paid → next due auto from cadence; check reminders + history.
+2. **Settings** — set quiet hours; request notifications; export then import JSON to verify backup.
+3. **Install** — Add to Home Screen; reload offline to confirm the shell still loads.
+4. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
+5. **More → Tax / Household / Docs / Kids / Insurance / Retirement / Science Desk** — explore coverage.
 6. **↺** — reset demo data anytime.
 
 ## Related business apps (separate SKUs)
@@ -68,7 +91,10 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 
 ## Disclaimer
 
-Demo / sample data only. Not tax, legal, labour, or financial advice. Life Desk does **not** file with SARS, submit uFiling, move money, or act as your attorney. Confirm real-world compliance with qualified professionals and official channels.
+Demo / sample data only. **Not** financial, tax, insurance, labour, or legal advice. Life Desk does **not** file with SARS, submit uFiling, move money, or act as your attorney. **No** mining, chemistry, or environmental advisory. Confirm real-world compliance with qualified professionals and official channels.
 
 ## Update 2026-09-11
-Platform bar 2026-09-11: Science Desk, elderly UI (18px+), location+purpose onboarding, household-with-kids (retirement, insurance hub, kids, home ops). Not financial/insurance/tax/medical advice.
+
+Platform bar: Science Desk, elderly UI (18px+), location+purpose onboarding, household-with-kids (retirement, insurance hub, kids, home ops).
+
+**feat/pwa-reminders-export:** PWA manifest + service worker shell cache, install affordance, reminders v1 (notifications + quiet hours + post-Done schedule), JSON export/import backup.
