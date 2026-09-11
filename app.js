@@ -354,6 +354,13 @@
     return {
       modules: { ...DEFAULT_MODULES },
       profile: { onboarded: false, city: "", purpose: "", updatedAt: null },
+      prefs: {
+        quietStart: 21,
+        quietEnd: 7,
+        notificationsEnabled: true,
+        lastNotified: {},
+        installDismissed: false,
+      },
       household: {
         name: "Prinsloo household",
         city: "Bloemfontein",
@@ -681,6 +688,14 @@
       }
       if (!Array.isArray(data.history)) data.history = [];
       if (!data.profile) data.profile = { onboarded: false, city: "", purpose: "", updatedAt: null };
+      data.prefs = Object.assign({
+        quietStart: 21,
+        quietEnd: 7,
+        notificationsEnabled: true,
+        lastNotified: {},
+        installDismissed: false,
+      }, data.prefs || {});
+      if (!data.prefs.lastNotified || typeof data.prefs.lastNotified !== "object") data.prefs.lastNotified = {};
       ["retirement","insurance","kids","kidFees","kidEvents","maintenance","adultAppts","pets","schoolCalendar"].forEach(function (k) {
         if (!Array.isArray(data[k])) data[k] = (seed()[k]) || [];
       });
@@ -777,13 +792,174 @@
     };
   }
 
+  function getPrefs() {
+    if (!state.prefs) {
+      state.prefs = {
+        quietStart: 21,
+        quietEnd: 7,
+        notificationsEnabled: true,
+        lastNotified: {},
+        installDismissed: false,
+      };
+    }
+    return state.prefs;
+  }
+
+  function inQuietHours(date) {
+    const prefs = getPrefs();
+    const h = (date || new Date()).getHours();
+    const start = Number(prefs.quietStart);
+    const end = Number(prefs.quietEnd);
+    if (Number.isNaN(start) || Number.isNaN(end)) return false;
+    if (start === end) return false;
+    if (start < end) return h >= start && h < end;
+    return h >= start || h < end;
+  }
+
+  function nextOutsideQuiet(from) {
+    const d = new Date(from || Date.now());
+    let guard = 0;
+    while (inQuietHours(d) && guard < 48) {
+      d.setMinutes(0, 0, 0);
+      d.setHours(d.getHours() + 1);
+      guard++;
+    }
+    return d;
+  }
+
+  function notifPermission() {
+    if (!("Notification" in window)) return "unsupported";
+    return Notification.permission;
+  }
+
+  function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+      toast("Notifications not supported here");
+      return Promise.resolve("unsupported");
+    }
+    if (Notification.permission === "granted") return Promise.resolve("granted");
+    if (Notification.permission === "denied") {
+      toast("Notifications blocked — enable in browser settings if you want alerts");
+      return Promise.resolve("denied");
+    }
+    return Notification.requestPermission()
+      .then(function (p) {
+        if (p === "granted") toast("Notifications on");
+        else if (p === "denied") toast("Notifications denied — in-app reminders still work");
+        else toast("Notifications not enabled");
+        render();
+        return p;
+      })
+      .catch(function () {
+        toast("Could not request notifications");
+        return "denied";
+      });
+  }
+
+  function fireDueNotification(item) {
+    const prefs = getPrefs();
+    if (!prefs.notificationsEnabled) return;
+    if (notifPermission() !== "granted") return;
+    if (inQuietHours(new Date())) return;
+    const key = item.processId || item.id;
+    const today = isoDate(new Date());
+    if (prefs.lastNotified[key] === today) return;
+    try {
+      const n = new Notification("Life Desk · due", {
+        body: item.title + (item.due < 0 ? " (overdue)" : item.due === 0 ? " (today)" : " · in " + item.due + "d"),
+        tag: "life-desk-" + key,
+        icon: "icons/icon-192.png",
+      });
+      prefs.lastNotified[key] = today;
+      save();
+      n.onclick = function () {
+        window.focus();
+        if (item.processId) openProcessRunner(item.processId);
+        n.close();
+      };
+    } catch (e) {
+      /* graceful: ignore */
+    }
+  }
+
+  function checkDueNotifications() {
+    const prefs = getPrefs();
+    if (!prefs.notificationsEnabled) return;
+    if (notifPermission() !== "granted") return;
+    if (inQuietHours(new Date())) return;
+    buildQueue()
+      .filter(function (item) { return item.due <= 0; })
+      .slice(0, 3)
+      .forEach(fireDueNotification);
+  }
+
+  var reminderTimers = {};
+
+  function clearReminderTimer(processId) {
+    if (reminderTimers[processId]) {
+      clearTimeout(reminderTimers[processId]);
+      delete reminderTimers[processId];
+    }
+  }
+
+  function scheduleReminderForProcess(proc) {
+    if (!proc || !proc.nextDue) return;
+    clearReminderTimer(proc.id);
+    const prefs = getPrefs();
+    if (!prefs.notificationsEnabled) return;
+    if (notifPermission() !== "granted") return;
+
+    const dueDay = startOfDay(parseISO(proc.nextDue));
+    const lead = proc.leadDays != null ? proc.leadDays : (PROCESS_TYPES[proc.type] || PROCESS_TYPES.custom).leadDays;
+    let fireAt = addDays(dueDay, -Math.min(lead, 1));
+    fireAt.setHours(8, 0, 0, 0);
+    fireAt = nextOutsideQuiet(fireAt);
+    const delay = fireAt.getTime() - Date.now();
+    if (delay <= 0) {
+      /* already in lead window — nudge soon if not quiet */
+      const soon = nextOutsideQuiet(new Date(Date.now() + 1500));
+      const d2 = soon.getTime() - Date.now();
+      if (d2 < 86400000) {
+        reminderTimers[proc.id] = setTimeout(function () {
+          fireDueNotification({
+            processId: proc.id,
+            id: proc.id,
+            title: proc.title,
+            due: processDue(proc),
+          });
+        }, Math.max(500, d2));
+      }
+      return;
+    }
+    if (delay > 2147483647) return; /* setTimeout max */
+    reminderTimers[proc.id] = setTimeout(function () {
+      fireDueNotification({
+        processId: proc.id,
+        id: proc.id,
+        title: proc.title,
+        due: processDue(proc),
+      });
+    }, delay);
+  }
+
+  function rescheduleAllReminders() {
+    (state.processes || []).forEach(scheduleReminderForProcess);
+  }
+
   function buildReminders() {
-    const q = buildQueue().slice(0, 5);
+    const q = buildQueue().slice(0, 8);
     const base = new Date();
-    return q.map((item, i) => {
-      const fire = new Date(base);
-      fire.setHours(7 + i, i === 0 ? 0 : 30, 0, 0);
-      if (fire < base) fire.setDate(fire.getDate() + 1);
+    const quietNow = inQuietHours(base);
+    return q.map(function (item, i) {
+      let fire = new Date(base);
+      fire.setMinutes(0, 0, 0);
+      if (item.due <= 0) {
+        fire = nextOutsideQuiet(new Date(base.getTime() + (quietNow ? 0 : 60 * 1000)));
+      } else {
+        fire = addDays(startOfDay(base), Math.max(0, item.due));
+        fire.setHours(8 + (i % 3), i % 2 === 0 ? 0 : 30, 0, 0);
+        fire = nextOutsideQuiet(fire);
+      }
       const time = fire.toLocaleTimeString("en-ZA", {
         timeZone: TZ,
         hour: "2-digit",
@@ -798,7 +974,10 @@
       return {
         when: day + " · " + time,
         title: item.title,
-        src: item.module,
+        src: item.module + (quietNow && item.due <= 0 ? " · quiet hours" : ""),
+        processId: item.processId,
+        due: item.due,
+        quietShifted: quietNow && item.due <= 0,
       };
     });
   }
@@ -877,18 +1056,39 @@
 
     const rem = buildReminders();
     const rp = $("#reminder-panel");
+    const rb = $("#reminder-badge");
+    const perm = notifPermission();
+    if (rb) {
+      rb.textContent = perm === "granted" ? "notify on" : perm === "denied" ? "in-app" : "auto";
+    }
     if (!rem.length) {
       rp.innerHTML = '<div class="empty">No scheduled reminders</div>';
     } else {
       rp.innerHTML = rem
-        .map(
-          (r) => `
-        <div class="reminder-item">
+        .map(function (r) {
+          return `
+        <button type="button" class="reminder-item ${r.due <= 0 ? "due-now" : ""}" ${r.processId ? 'data-process="' + r.processId + '"' : ""}>
           <div class="r-time">${esc(r.when)}</div>
-          <div class="r-body">${esc(r.title)}<div class="r-src">${esc(r.src)}</div></div>
-        </div>`
-        )
+          <div class="r-body">${esc(r.title)}<div class="r-src ${r.quietShifted ? "quiet" : ""}">${esc(r.src)}</div></div>
+        </button>`;
+        })
         .join("");
+    }
+    const en = $("#btn-enable-notifs");
+    if (en) {
+      if (perm === "granted") {
+        en.textContent = "Notifications on";
+        en.disabled = true;
+      } else if (perm === "denied") {
+        en.textContent = "Notifications blocked";
+        en.disabled = true;
+      } else if (perm === "unsupported") {
+        en.textContent = "Notifications unsupported";
+        en.disabled = true;
+      } else {
+        en.textContent = "Enable notifications";
+        en.disabled = false;
+      }
     }
 
     renderHistoryPanel($("#history-panel"), 5);
@@ -1159,6 +1359,12 @@
       { key: "tax", title: "Tax", meta: "Provisional / VAT / personal reminders + prep" },
       { key: "household", title: "Household employer", meta: "Domestic / gardener / nanny — disable if unused" },
       { key: "docs", title: "Docs vault", meta: "Expiry watch + module filings" },
+      { key: "retire", title: "Retirement & savings", meta: "RA / pension / TFSA-style reminders" },
+      { key: "insurance", title: "Insurance hub", meta: "Medical · life · funeral · contents · car" },
+      { key: "kids", title: "Kids", meta: "School · activities · clinic · slips" },
+      { key: "homeops", title: "Home ops", meta: "Groceries · repairs · adult clinic" },
+      { key: "pets", title: "Pets", meta: "Pet care reminders — optional" },
+      { key: "science", title: "Science Desk", meta: "Weekly improve tips · methods + limits" },
     ];
     $("#module-toggles").innerHTML = defs
       .map(
@@ -1197,6 +1403,22 @@
           .join("") || '<div class="empty">No processes — add one</div>';
     }
     renderHistoryPanel($("#history-list-full"), 20);
+
+    const prefs = getPrefs();
+    const qs = $("#quiet-start");
+    const qe = $("#quiet-end");
+    const pn = $("#pref-notifs");
+    const ns = $("#notif-status");
+    if (qs && document.activeElement !== qs) qs.value = String(prefs.quietStart);
+    if (qe && document.activeElement !== qe) qe.value = String(prefs.quietEnd);
+    if (pn) pn.checked = !!prefs.notificationsEnabled;
+    if (ns) {
+      const p = notifPermission();
+      ns.textContent =
+        "Permission: " +
+        p +
+        (inQuietHours(new Date()) ? " · currently in quiet hours" : " · outside quiet hours");
+    }
   }
 
   function render() {
@@ -1721,6 +1943,7 @@
 
     save();
     closeProcessRunner();
+    scheduleReminderForProcess(proc);
     render();
     toast("Done · next due " + fmtDate(nextDue) + " (" + cadenceLabel(cadence) + ")");
   }
@@ -1840,9 +2063,12 @@
   /* ── events ── */
   function resetDemo() {
     if (!confirm("Reset all Life Desk demo data?")) return;
+    Object.keys(reminderTimers).forEach(clearReminderTimer);
     state = seed();
     save();
     showView("today");
+    updateInstallBanner();
+    rescheduleAllReminders();
     toast("Demo reset");
   }
 
@@ -1933,7 +2159,7 @@
       `<p><strong>Life Desk</strong> is a mobile-first demo of a South African household life-management autopilot (L3–L4).</p>
        <p>Tap a due bill → Open payment (exact stored URL) → confirm paid → next due auto from cadence. You only <strong>Approve</strong> money / legal / government steps.</p>
        <p>Sample data: Prinsloo household, Bloemfontein. Toggle modules in Settings.</p>
-       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour or medical advice. Does not file with SARS or uFiling. Demo / localStorage only.</p>`
+       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour, legal or medical advice. Does not file with SARS or uFiling. No mining, chemistry or environmental advisory. Demo / localStorage only. Installable PWA · export your JSON backup from Settings.</p>`
     );
   });
   $("#modal-close").addEventListener("click", closeModal);
@@ -2026,8 +2252,214 @@
   $("#btn-add-process-today")?.addEventListener("click", () => openAddProcessModal());
   document.getElementById("ob-save") && document.getElementById("ob-save").addEventListener("click", completeOnboarding);
 
+  /* ── backup export / import ── */
+  function collectExportPayload() {
+    return {
+      app: "life-desk",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      keys: {
+        [STORAGE_KEY]: state,
+      },
+    };
+  }
+
+  function exportJson() {
+    const payload = collectExportPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "life-desk-backup-" + isoDate(new Date()) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toast("Exported JSON backup");
+  }
+
+  function applyImportPayload(data) {
+    if (!data || typeof data !== "object") throw new Error("Invalid file");
+    let next = null;
+    if (data.keys && data.keys[STORAGE_KEY]) next = data.keys[STORAGE_KEY];
+    else if (data.state && typeof data.state === "object") next = data.state;
+    else if (data.processes || data.modules) next = data;
+    else if (data.keys) {
+      const vals = Object.keys(data.keys);
+      if (vals.length === 1) next = data.keys[vals[0]];
+    }
+    if (!next || typeof next !== "object") throw new Error("No Life Desk state in file");
+    next.modules = Object.assign({}, DEFAULT_MODULES, next.modules || {});
+    next.prefs = Object.assign({
+      quietStart: 21,
+      quietEnd: 7,
+      notificationsEnabled: true,
+      lastNotified: {},
+      installDismissed: false,
+    }, next.prefs || {});
+    if (!Array.isArray(next.processes)) next.processes = seedProcesses(startOfDay(new Date()));
+    if (!Array.isArray(next.history)) next.history = [];
+    if (!next.profile) next.profile = { onboarded: false, city: "", purpose: "", updatedAt: null };
+    state = next;
+    save();
+    rescheduleAllReminders();
+    render();
+    toast("Import complete");
+  }
+
+  function importJsonFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      try {
+        const data = JSON.parse(String(reader.result || ""));
+        applyImportPayload(data);
+      } catch (err) {
+        toast("Import failed — check JSON");
+      }
+    };
+    reader.onerror = function () { toast("Could not read file"); };
+    reader.readAsText(file);
+  }
+
+  /* ── PWA install affordance ── */
+  var deferredInstall = null;
+  function updateInstallBanner() {
+    const banner = $("#install-banner");
+    if (!banner) return;
+    const prefs = getPrefs();
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (standalone || prefs.installDismissed) {
+      banner.classList.add("hidden");
+      return;
+    }
+    if (deferredInstall) {
+      banner.classList.remove("hidden");
+      const btn = $("#btn-install");
+      if (btn) btn.textContent = "Install";
+    } else {
+      /* iOS / browsers without beforeinstallprompt — still show how-to */
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS && !prefs.installDismissed) {
+        banner.classList.remove("hidden");
+        const btn = $("#btn-install");
+        if (btn) btn.textContent = "How to";
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
+  }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredInstall = e;
+    updateInstallBanner();
+  });
+  window.addEventListener("appinstalled", function () {
+    deferredInstall = null;
+    getPrefs().installDismissed = true;
+    save();
+    updateInstallBanner();
+    toast("Life Desk installed");
+  });
+
+  $("#btn-install") && $("#btn-install").addEventListener("click", function () {
+    if (deferredInstall) {
+      deferredInstall.prompt();
+      deferredInstall.userChoice.then(function (choice) {
+        deferredInstall = null;
+        if (choice && choice.outcome === "accepted") {
+          getPrefs().installDismissed = true;
+          save();
+        }
+        updateInstallBanner();
+      });
+      return;
+    }
+    openModal(
+      "Add to Home Screen",
+      `<p style="font-size:15px;line-height:1.55">On iPhone/iPad: Safari → Share → <strong>Add to Home Screen</strong>.</p>
+       <p style="font-size:15px;line-height:1.55;margin-top:8px">On Android Chrome: menu → <strong>Install app</strong> / Add to Home screen.</p>
+       <p style="font-size:13px;color:var(--muted);margin-top:10px">Offline shell caches index, app.js, styles, and manifest. Not financial/tax/insurance/legal advice.</p>`
+    );
+  });
+  $("#btn-install-dismiss") && $("#btn-install-dismiss").addEventListener("click", function () {
+    getPrefs().installDismissed = true;
+    save();
+    updateInstallBanner();
+  });
+
+  $("#btn-enable-notifs") && $("#btn-enable-notifs").addEventListener("click", function () {
+    getPrefs().notificationsEnabled = true;
+    save();
+    requestNotificationPermission().then(function () {
+      checkDueNotifications();
+      rescheduleAllReminders();
+    });
+  });
+  $("#btn-request-notifs") && $("#btn-request-notifs").addEventListener("click", function () {
+    getPrefs().notificationsEnabled = true;
+    save();
+    requestNotificationPermission().then(function () {
+      checkDueNotifications();
+      rescheduleAllReminders();
+      render();
+    });
+  });
+  $("#pref-notifs") && $("#pref-notifs").addEventListener("change", function (e) {
+    getPrefs().notificationsEnabled = !!e.target.checked;
+    save();
+    if (e.target.checked) {
+      requestNotificationPermission().then(function () { rescheduleAllReminders(); });
+    } else {
+      Object.keys(reminderTimers).forEach(clearReminderTimer);
+      toast("Reminder alerts off — queue still shows in Today");
+    }
+    render();
+  });
+  function saveQuietFromInputs() {
+    const prefs = getPrefs();
+    const qs = $("#quiet-start");
+    const qe = $("#quiet-end");
+    if (qs) {
+      let v = Math.max(0, Math.min(23, Number(qs.value)));
+      if (Number.isNaN(v)) v = 21;
+      prefs.quietStart = v;
+    }
+    if (qe) {
+      let v = Math.max(0, Math.min(23, Number(qe.value)));
+      if (Number.isNaN(v)) v = 7;
+      prefs.quietEnd = v;
+    }
+    save();
+    rescheduleAllReminders();
+    toast("Quiet hours saved");
+    render();
+  }
+  $("#quiet-start") && $("#quiet-start").addEventListener("change", saveQuietFromInputs);
+  $("#quiet-end") && $("#quiet-end").addEventListener("change", saveQuietFromInputs);
+
+  $("#btn-export-json") && $("#btn-export-json").addEventListener("click", exportJson);
+  $("#btn-import-json") && $("#btn-import-json").addEventListener("click", function () {
+    const f = $("#import-file");
+    if (f) f.click();
+  });
+  $("#import-file") && $("#import-file").addEventListener("change", function (e) {
+    const file = e.target.files && e.target.files[0];
+    importJsonFile(file);
+    e.target.value = "";
+  });
+
   /* boot */
   save();
   maybeOnboard();
   render();
+  updateInstallBanner();
+  rescheduleAllReminders();
+  checkDueNotifications();
+  setInterval(function () {
+    checkDueNotifications();
+  }, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkDueNotifications();
+  });
 })();
