@@ -5,25 +5,6 @@
   "use strict";
 
   const STORAGE_KEY = "life-desk-v4";
-
-  /* PLATFORM_BAR_2026_09_11 */
-  const SCIENCE_TIPS = [
-  {
-    "h": "Bill cadence experiment",
-    "body": "Pick one due bill. Pay 3 days earlier this month. Note stress and cash buffer. Keep if calmer.",
-    "method": "Method: single-variable change \u00b7 Limit: sample of one household"
-  },
-  {
-    "h": "Prepaid top-up window",
-    "body": "Log meter days-to-empty for 2 cycles. Set lead days = average \u2212 3.",
-    "method": "Method: simple average \u00b7 Limit: season and guests change use"
-  },
-  {
-    "h": "Kids calendar sync",
-    "body": "Put school fees + one activity fee on the same payday week. Fewer surprise cash hits.",
-    "method": "Method: calendar batching \u00b7 Limit: school term dates vary"
-  }
-];
   const PURPOSE_MODULE_PRESETS = {
   "household": {
     "money": true,
@@ -35,9 +16,8 @@
     "insurance": true,
     "kids": true,
     "homeops": true,
-    "pets": false,
-    "science": true
-  },
+    "pets": false
+      },
   "farm": {
     "money": true,
     "vehicle": true,
@@ -48,9 +28,8 @@
     "insurance": true,
     "kids": false,
     "homeops": true,
-    "pets": true,
-    "science": true
-  },
+    "pets": true
+      },
   "trade": {
     "money": true,
     "vehicle": true,
@@ -61,9 +40,8 @@
     "insurance": true,
     "kids": false,
     "homeops": false,
-    "pets": false,
-    "science": true
-  },
+    "pets": false
+      },
   "rentals": {
     "money": true,
     "vehicle": false,
@@ -74,9 +52,8 @@
     "insurance": true,
     "kids": false,
     "homeops": true,
-    "pets": false,
-    "science": true
-  },
+    "pets": false
+      },
   "stokvel": {
     "money": true,
     "vehicle": false,
@@ -87,9 +64,8 @@
     "insurance": true,
     "kids": false,
     "homeops": false,
-    "pets": false,
-    "science": true
-  },
+    "pets": false
+      },
   "flood": {
     "money": false,
     "vehicle": false,
@@ -100,9 +76,8 @@
     "insurance": true,
     "kids": false,
     "homeops": false,
-    "pets": false,
-    "science": true
-  },
+    "pets": false
+      },
   "decisions": {
     "money": true,
     "vehicle": false,
@@ -113,9 +88,8 @@
     "insurance": false,
     "kids": false,
     "homeops": false,
-    "pets": false,
-    "science": true
-  }
+    "pets": false
+      }
 };
 
   const TZ = "Africa/Johannesburg";
@@ -346,7 +320,6 @@
     kids: true,
     homeops: true,
     pets: false,
-    science: true,
   };
 
   function seed() {
@@ -1225,7 +1198,6 @@
       { id: "insurance", mod: "insurance", icon: "🛡", title: "Insurance", meta: "Medical · life · car · gap" },
       { id: "retire", mod: "retire", icon: "📈", title: "Retirement", meta: "RA · pension · TFSA reminders" },
       { id: "homeops", mod: "homeops", icon: "🏠", title: "Home ops", meta: "Groceries · repairs · pets" },
-      { id: "science", mod: "science", icon: "🔬", title: "Science Desk", meta: "Weekly tips · methods" },
       { id: "tax", mod: "tax", icon: "📋", title: "Tax", meta: "Deadlines · prep packs" },
       { id: "household", mod: "household", icon: "👥", title: "Household", meta: "Workers · payroll Approve" },
       { id: "docs", mod: "docs", icon: "📄", title: "Docs", meta: "Vault · expiry watch" },
@@ -1364,7 +1336,6 @@
       { key: "kids", title: "Kids", meta: "School · activities · clinic · slips" },
       { key: "homeops", title: "Home ops", meta: "Groceries · repairs · adult clinic" },
       { key: "pets", title: "Pets", meta: "Pet care reminders — optional" },
-      { key: "science", title: "Science Desk", meta: "Weekly improve tips · methods + limits" },
     ];
     $("#module-toggles").innerHTML = defs
       .map(
@@ -1434,7 +1405,6 @@
     if (currentView === "insurance") renderInsurance();
     if (currentView === "kids") renderKids();
     if (currentView === "homeops") renderHomeOps();
-    if (currentView === "science") renderScience();
     if (currentView === "settings") renderSettings();
   }
 
@@ -1527,13 +1497,6 @@
 
   
   /* PLATFORM_BAR_2026_09_11 helpers */
-  function renderScience() {
-    const root = document.getElementById("science-tips");
-    if (!root) return;
-    root.innerHTML = SCIENCE_TIPS.map((t) =>
-      '<div class="science-tip"><h4>' + esc(t.h) + '</h4><p>' + esc(t.body) + '</p><div class="method">' + esc(t.method) + '</div></div>'
-    ).join("");
-  }
 
   function applyPurposeModules(purpose) {
     const preset = PURPOSE_MODULE_PRESETS[purpose];
