@@ -21,7 +21,6 @@ Modules adapt via Settings toggles (persisted in `localStorage`).
 | **Household** | Workers stub + payroll **Approve** card (disable if unused) |
 | **Docs** | Simple vault list with expiry watch |
 | **Retirement / Insurance / Kids / Home ops** | Coverage already in demo — process-backed where due |
-| **Science Desk** | Weekly improve tips (methods + limits) |
 | **Settings** | Module show/hide · quiet hours · notifications · JSON backup |
 
 Shared DNA with other Este apps: the app **reminds, chases, prepares, closes**; human only **Approves** money / legal / government.
@@ -80,7 +79,7 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 2. **Settings** — set quiet hours; request notifications; export then import JSON to verify backup (confirm replace).
 3. **Install** — Add to Home Screen; reload offline to confirm the shell still loads.
 4. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
-5. **More → Tax / Household / Docs / Kids / Insurance / Retirement / Science Desk** — explore coverage.
+5. **More → Tax / Household / Docs / Kids / Insurance / Retirement** — explore coverage.
 6. **↺** — reset demo data anytime.
 
 ## Related apps
@@ -98,6 +97,6 @@ Demo / sample data only. **Not** financial, tax, insurance, labour, medical, or 
 
 ## Update 2026-09-11
 
-Platform bar: Science Desk, elderly UI (18px+), location+purpose onboarding, household-with-kids (retirement, insurance hub, kids, home ops).
+Platform bar: elderly UI (18px+), location+purpose onboarding, household-with-kids (retirement, insurance hub, kids, home ops).
 
 **PWA + reminders + backup:** web manifest + service worker shell cache, install affordance, device reminders (Notification API + quiet hours; no background sync), JSON export/import with version field.
