@@ -2,9 +2,10 @@
 
 **Life Desk** is a mobile-first, installable (PWA) South African **household life-management autopilot** (L3–L4).
 
-The public demo is **free**. This same static spine can ship as a sellable pack (your own household data; sample family replaced) with no backend. No storefront CTA on this page — Stokvel remains the primary cash product.
+This public page is a **free try of the live Gumroad product**. Sample household: **Prinsloo · Bloemfontein**. Sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. No mining, chemistry, or environmental advisory.
 
-Sample household on the live demo: **Prinsloo · Bloemfontein**. Demo / sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. No mining, chemistry, or environmental advisory.
+**Buy live unlock (Gumroad):** [Life Desk Autopilot — R179](https://stofficial.gumroad.com/l/xnofrn)  
+Also: [Stokvel OS — R99](https://stofficial.gumroad.com/l/ydbgne) (primary meeting pack).
 
 Modules adapt via Settings toggles (persisted in `localStorage`).
 
@@ -20,18 +21,18 @@ Modules adapt via Settings toggles (persisted in `localStorage`).
 | **Tax** | Upcoming deadline cards + prep packs (**not** filing as you) |
 | **Household** | Workers stub + payroll **Approve** card (disable if unused) |
 | **Docs** | Simple vault list with expiry watch |
-| **Retirement / Insurance / Kids / Home ops** | Coverage already in demo — process-backed where due |
+| **Retirement / Insurance / Kids / Home ops** | Coverage already in this free try — process-backed where due |
 | **Settings** | Module show/hide · quiet hours · notifications · JSON backup |
 
 Shared DNA with other Este apps: the app **reminds, chases, prepares, closes**; human only **Approves** money / legal / government.
 
 Master function map: `/workspace/ops/research/2026-09-10-life-and-business-apps-master.md`
 
-## Live URL
+## Free try (live)
 
 **https://esteprinsloo101-web.github.io/life-desk/**
 
-(GitHub Pages from `main` at repo root; allow a minute after merge/push for deploy.)
+GitHub Pages from `main` at repo root (allow a minute after merge for deploy). Paid unlock: [Gumroad R179](https://stofficial.gumroad.com/l/xnofrn).
 
 ## Open locally
 
@@ -80,20 +81,20 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 3. **Install** — Add to Home Screen; reload offline to confirm the shell still loads.
 4. **Vehicle** — log a fuel fill; try disc checklist / mark renewed.
 5. **More → Tax / Household / Docs / Kids / Insurance / Retirement** — explore coverage.
-6. **↺** — reset demo data anytime.
+6. **↺** — reset sample data anytime.
 
 ## Related apps
 
 | App | Notes |
 |-----|--------|
-| Garage Desk | Live demo: https://esteprinsloo101-web.github.io/garage-desk/ · `/workspace/garage-desk` |
+| Garage Desk | Family-only: https://esteprinsloo101-web.github.io/garage-desk/ · `/workspace/garage-desk` |
 | Trade Job Pipeline | Brief: `/workspace/ops/research/business-apps/trade.md` |
 | Rental Case | Brief: `/workspace/ops/research/business-apps/rental.md` |
 | Shared Group Money | Brief: `/workspace/ops/research/business-apps/group-money.md` |
 
 ## Disclaimer
 
-Demo / sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. Life Desk does **not** file with SARS, submit uFiling, move money, or act as your attorney. **No** mining, chemistry, or environmental advisory. Confirm real-world compliance with qualified professionals and official channels.
+Free try / sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. Life Desk does **not** file with SARS, submit uFiling, move money, or act as your attorney. **No** mining, chemistry, or environmental advisory. Confirm real-world compliance with qualified professionals and official channels.
 
 ## Update 2026-09-11
 
