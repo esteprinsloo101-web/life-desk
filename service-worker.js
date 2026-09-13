@@ -1,5 +1,5 @@
 /* Life Desk — shell cache for offline-ish PWA (static GitHub Pages) */
-const CACHE = "life-desk-shell-v1";
+const CACHE = "life-desk-shell-v2";
 const SHELL = [
   "./",
   "./index.html",

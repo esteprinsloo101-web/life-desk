@@ -2025,14 +2025,14 @@
 
   /* ── events ── */
   function resetDemo() {
-    if (!confirm("Reset all Life Desk demo data?")) return;
+    if (!confirm("Reset all Life Desk sample data?")) return;
     Object.keys(reminderTimers).forEach(clearReminderTimer);
     state = seed();
     save();
     showView("today");
     updateInstallBanner();
     rescheduleAllReminders();
-    toast("Demo reset");
+    toast("Sample data reset");
   }
 
   document.getElementById("bottom-nav").addEventListener("click", (e) => {
@@ -2119,10 +2119,10 @@
   $("#btn-info").addEventListener("click", () => {
     openModal(
       "About Life Desk",
-      `<p><strong>Life Desk</strong> is a mobile-first demo of a South African household life-management autopilot (L3–L4).</p>
+      `<p><strong>Life Desk</strong> is a free try of the live Gumroad household life-management autopilot (L3–L4).</p>
        <p>Tap a due bill → Open payment (exact stored URL) → confirm paid → next due auto from cadence. You only <strong>Approve</strong> money / legal / government steps.</p>
-       <p>Sample data on this demo: Prinsloo household, Bloemfontein. Toggle modules, reminders, and JSON backup in Settings.</p>
-       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour, legal or medical advice. Does not file with SARS or uFiling. No mining, chemistry or environmental advisory. Demo / localStorage only. Installable PWA · export/import JSON from Settings. Reminders need the app open (no background sync).</p>`
+       <p>Sample data on this free try: Prinsloo household, Bloemfontein. Toggle modules, reminders, and JSON backup in Settings.</p>
+       <p style="font-size:12px;color:var(--muted)">Not financial, insurance, tax, labour, legal or medical advice. Does not file with SARS or uFiling. No mining, chemistry or environmental advisory. Sample / localStorage only. Installable PWA · export/import JSON from Settings. Reminders need the app open (no background sync). Buy live unlock: <a href="https://stofficial.gumroad.com/l/xnofrn" target="_blank" rel="noopener">Gumroad R179</a>.</p>`
     );
   });
   $("#modal-close").addEventListener("click", closeModal);
