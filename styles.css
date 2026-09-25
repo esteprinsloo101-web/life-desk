@@ -1,5 +1,5 @@
 /* Life Desk — Mobile-first household autopilot
-   Dark navy + teal/emerald (life) — same quality bar as Garage Desk */
+   Dark navy + teal/emerald (life) — same quality bar as the other desk apps */
 
 :root {
   --navy: #0b1220;
@@ -734,7 +734,7 @@ ul, ol { list-style: none; }
 .row.btn-like { cursor: pointer; }
 
 
-/* ── Este platform bar 2026-09-11: elderly-simple + onboarding ── */
+/* ── Platform bar 2026-09-11: elderly-simple + onboarding ── */
 :root {
   --text: #f8fafc;
   --text-dim: #e2e8f0;

@@ -2,7 +2,7 @@
 
 **Life Desk** is a mobile-first, installable (PWA) South African **household life-management autopilot** (L3–L4).
 
-This public page is a **free try of the live Gumroad product**. Sample household: **Prinsloo · Bloemfontein**. Sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. No mining, chemistry, or environmental advisory.
+This public page is a **free try of the live Gumroad product**. Sample household: **Mokoena · Bloemfontein**. Sample data only. **Not** financial, tax, insurance, labour, medical, or legal advice. No mining, chemistry, or environmental advisory.
 
 **Buy live unlock (Gumroad):** [Life Desk Autopilot — R179](https://stofficial.gumroad.com/l/xnofrn)  
 Also: [Stokvel OS — R99](https://stofficial.gumroad.com/l/ydbgne) (primary meeting pack).
@@ -24,7 +24,7 @@ Modules adapt via Settings toggles (persisted in `localStorage`).
 | **Retirement / Insurance / Kids / Home ops** | Coverage already in this free try — process-backed where due |
 | **Settings** | Module show/hide · quiet hours · notifications · JSON backup |
 
-Shared DNA with other Este apps: the app **reminds, chases, prepares, closes**; human only **Approves** money / legal / government.
+Shared DNA with the other desk apps: the app **reminds, chases, prepares, closes**; human only **Approves** money / legal / government.
 
 Master function map: `/workspace/ops/research/2026-09-10-life-and-business-apps-master.md`
 
@@ -87,7 +87,6 @@ Clicking a due bill/payment opens a **ProcessRunner** wizard: **Open payment** (
 
 | App | Notes |
 |-----|--------|
-| Garage Desk | Family-only: https://esteprinsloo101-web.github.io/garage-desk/ · `/workspace/garage-desk` |
 | Trade Job Pipeline | Brief: `/workspace/ops/research/business-apps/trade.md` |
 | Rental Case | Brief: `/workspace/ops/research/business-apps/rental.md` |
 | Shared Group Money | Brief: `/workspace/ops/research/business-apps/group-money.md` |

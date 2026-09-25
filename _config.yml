@@ -1,0 +1,3 @@
+# Keep internal notes off the public site (Pages builds with Jekyll)
+exclude:
+  - README.md
